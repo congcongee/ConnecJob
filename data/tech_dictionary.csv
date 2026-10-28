@@ -1,0 +1,122 @@
+﻿표준명,분류,별칭
+Python,프로그래밍언어,python|PYTHON|파이썬|파이선
+Java,프로그래밍언어,JAVA|java|자바
+JavaScript,프로그래밍언어,javascript|JS|자바스크립트
+TypeScript,프로그래밍언어,typescript|TS|타입스크립트
+C,프로그래밍언어,C언어|C 언어
+C++,프로그래밍언어,c++|CPP|cpp|VisualC++|Visual C++|씨플플
+C#,프로그래밍언어,c#|C Sharp|씨샵
+PHP,프로그래밍언어,php
+SQL,프로그래밍언어,sql|Query|쿼리
+MATLAB,프로그래밍언어,Matlab|matlab|매트랩
+HTML,프로그래밍언어,html|HTML5
+CSS,프로그래밍언어,css|CSS3
+JSP,프레임워크,jsp|Java/JSP|JAVA/JSP
+.NET,프레임워크,NET|.Net|닷넷|C#.NET|C#.Net
+Spring,프레임워크,spring|스프링|Spring Framework
+Spring Boot,프레임워크,SpringBoot|스프링부트|Spring boot
+MyBatis,프레임워크,mybatis|마이바티스
+Thymeleaf,프레임워크,thymeleaf|타임리프
+React,프레임워크,react|React.js|ReactJS|리액트
+React Native,프레임워크,RN|리액트네이티브|React-Native
+Redux,프레임워크,redux|리덕스
+Zustand,프레임워크,zustand
+jQuery,프레임워크,jquery|JQuery|제이쿼리
+Bootstrap,프레임워크,bootstrap|부트스트랩
+WPF,프레임워크,wpf
+WinForms,프레임워크,Winforms|Windows Forms
+MFC,프레임워크,mfc
+.NET MAUI,프레임워크,MAUI|maui
+Expo,프레임워크,expo
+PyTorch,AI·데이터,pytorch|Pytorch|파이토치
+TensorFlow,AI·데이터,tensorflow|Tensorflow|텐서플로
+OpenCV,AI·데이터,opencv|OpenCv
+YOLO,AI·데이터,yolo|Yolo
+HALCON,AI·데이터,Halcon|halcon
+Databricks,AI·데이터,Data Bricks|DataBricks|데이터브릭스
+인공지능,AI·데이터,AI|Ai|ai|A.I.
+머신러닝,AI·데이터,ML|기계학습|Machine Learning|machine learning
+딥러닝,AI·데이터,DL|Deep Learning|deep learning
+컴퓨터비전,AI·데이터,Computer Vision|컴퓨터 비전|머신비전|Machine Vision|Vision
+빅데이터,AI·데이터,Big Data|BIG DATA|bigdata
+LoRA,AI·데이터,LoRa
+MySQL,데이터베이스,mysql|MYSQL|Mysql
+MSSQL,데이터베이스,MS SQL|MS-SQL|SQL Server|mssql
+Oracle,데이터베이스,oracle|ORACLE|오라클
+데이터베이스,데이터베이스,DB|db|RDBMS|Database
+Linux,운영체제,linux|LINUX|리눅스
+Ubuntu,운영체제,ubuntu|우분투
+Windows,운영체제,Window|windows|윈도우|윈도우즈
+Android,운영체제,android|안드로이드
+iOS,운영체제,IOS|ios|아이오에스
+AWS,클라우드·인프라,aws|아마존웹서비스|Amazon Web Services
+Azure,클라우드·인프라,azure|애저|MS Azure
+GCP,클라우드·인프라,gcp|Google Cloud|구글클라우드
+CI/CD,클라우드·인프라,CICD|ci/cd
+Git,협업도구,git|GIT|깃
+SVN,협업도구,svn|Subversion
+REST API,웹·네트워크,REST|Restful|RESTful|restful|RESTful API
+API,웹·네트워크,api|Api
+TCP/IP,웹·네트워크,TCP|tcp/ip|TCP/UDP
+WebSocket,웹·네트워크,websocket|웹소켓
+MQTT,웹·네트워크,mqtt
+JWT,웹·네트워크,jwt
+SSO,웹·네트워크,sso|싱글사인온
+WAS,웹·네트워크,was|웹애플리케이션서버
+VoIP,웹·네트워크,voip|VOIP
+Asterisk,웹·네트워크,asterisk
+백엔드,직무영역,Back End|Back-End|Backend|backend|백앤드
+프론트엔드,직무영역,Front End|Front-End|Frontend|frontend|프론트|프런트엔드
+풀스택,직무영역,Full Stack|Full-Stack|Fullstack|fullstack
+웹,직무영역,Web|web|WEB
+앱,직무영역,App|app|APP|어플|애플리케이션|어플리케이션
+소프트웨어,직무영역,S/W|SW|sw|Software|software
+하드웨어,직무영역,H/W|HW|hw|Hardware|hardware
+펌웨어,직무영역,F/W|FW|fw|Firmware|firmware
+임베디드,직무영역,Embedded|embedded|임베디드시스템
+UI/UX,직무영역,UI|UX|ui/ux|UIUX
+사물인터넷,임베디드·HW,IoT|IOT|iot
+AIoT,임베디드·HW,AIOT|aiot
+MCU,임베디드·HW,mcu|마이크로컨트롤러
+STM32,임베디드·HW,stm32
+ESP32,임베디드·HW,esp32
+Arduino,임베디드·HW,Aduino|arduino|아두이노
+NVIDIA Jetson,임베디드·HW,Jetson|jetson|젯슨
+PCB,임베디드·HW,pcb|인쇄회로기판
+SMPS,임베디드·HW,smps|Smps
+DC-DC,임베디드·HW,DC/DC|dc-dc|DCDC
+AC-DC,임베디드·HW,AC/DC|ac-dc|ACDC
+PWM,임베디드·HW,pwm
+DSP,임베디드·HW,dsp
+RF,임베디드·HW,rf|고주파
+EMI/EMC,임베디드·HW,EMI|EMC|emi/emc
+CAN,임베디드·HW,CAN통신|CAN bus
+RS-232,임베디드·HW,RS232|rs-232
+UWB,임베디드·HW,uwb
+BLE,임베디드·HW,ble|Bluetooth Low Energy
+PLC,산업자동화,plc|피엘씨
+SCADA,산업자동화,scada|HyperSCADA
+HMI,산업자동화,hmi
+Modbus,산업자동화,modbus|MODBUS
+OPC,산업자동화,OPC UA|opc
+MES,산업자동화,mes|생산관리시스템
+ERP,업무시스템,erp|Erp|전사적자원관리
+PDM,업무시스템,pdm
+AutoCAD,설계·CAD,CAD|cad|캐드|오토캐드|AUTO CAD|Auto CAD|Auto-CAD|AutoCad|autocad
+CAD/CAM,설계·CAD,캐드캠|CADCAM
+BIM,설계·CAD,bim
+SolidWorks,설계·CAD,SOLID WORKS|Solidworks|solidworks|솔리드웍스
+Tekla Structures,설계·CAD,Tekla|tekla|테클라
+Simulink,설계·CAD,simulink|시뮬링크
+HFSS,설계·CAD,hfss
+MS Office,사무도구,Office|오피스|MS오피스|MS 오피스
+Excel,사무도구,excel|엑셀|MS Excel|표계산|스프레드시트
+Word,사무도구,MS Word|MS워드|워드프로세서|문서작성
+PowerPoint,사무도구,파워포인트|PPT|ppt|프레젠테이션
+한글(HWP),사무도구,HWP|hwp|한/글|아래아한글|한컴오피스
+회계프로그램,사무도구,더존|Douzone|DOUZONE|더존스마트A
+Claude,AI도구,claude|클로드
+Cursor,AI도구,cursor|커서
+정보처리기사,자격증,정보처리|정보처리 기사|정처기
+ISTQB,자격증,istqb
+CSTS,자격증,csts
