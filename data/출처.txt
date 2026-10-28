@@ -6,3 +6,6 @@ https://www.data.go.kr/data/15119095/fileData.do
 
 한국고용정보원, 고용24 Open API (강소기업, 직업정보, 공통코드, 직무정보)
 https://www.work24.go.kr/cm/e/b/0310/selectOpenApiSvcApprList.do
+
+한국산업인력공단_국가자격 종목 목록 정보_20251231 (qnet_cert.csv, cp949→utf-8-sig 변환)
+https://www.data.go.kr/data/15082998/fileData.do
