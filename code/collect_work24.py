@@ -1,7 +1,7 @@
 """고용24 Open API 수집 + 전처리.
 
 API 키는 data/.env 에서 os.getenv 로 읽는다 (코드에 하드코딩 금지).
-결과는 data/work24_<이름>.csv (utf-8-sig) 로 저장.
+원본은 data/raw/work24_<이름>.csv, 전처리 결과는 data/processed/work24_<이름>.csv (utf-8-sig) 로 저장.
 """
 import os
 import time
@@ -13,7 +13,9 @@ import pandas as pd
 import requests
 from dotenv import load_dotenv
 
-DATA_DIR = Path(__file__).parent / "data"
+DATA_DIR = Path(__file__).parent.parent / "data"
+RAW_DIR = DATA_DIR / "raw"
+OUT_DIR = DATA_DIR / "processed"
 load_dotenv(DATA_DIR / ".env")
 
 BASE = "https://www.work24.go.kr/cm/openApi/call/wk/"
@@ -33,7 +35,9 @@ DUTY_APIS = {
     "duty_word": ("callOpenApiSvcInfo215L11.do", "word"),     # 직무데이터사전: 키워드 → NCS 능력단위
 }
 # 직무정보 검색어. 필요에 맞게 수정
-DUTY_QUERIES = ["데이터 분석", "웹 개발", "회계", "마케팅", "인사관리", "간호", "영업", "디자인"]
+DUTY_QUERIES = ["데이터 분석", "웹 개발", "회계", "마케팅", "인사관리", "간호", "영업", "디자인",
+                "디지털 마케팅", "광고", "고객관계관리",
+                "소프트웨어 개발", "데이터 엔지니어링", "인공지능", "정보보안", "클라우드"]
 DUTY_LIMIT = 20
 
 
@@ -102,11 +106,7 @@ def collect_duty(name):
             row.update({k: v for k, v in unit.items() if not isinstance(v, (list, dict))})
             data.append(row)
         time.sleep(0.2)
-    df = pd.DataFrame(data)
-    # 코드 필드가 "http://lod.work.go.kr/task/중분류/_0301" 형태 → 끝의 코드만
-    for c in [c for c in df.columns if c.endswith("_cd")]:
-        df[c] = df[c].str.rsplit("_", n=1).str[-1]
-    return df.drop(columns=["centerURL", "centerLabel"], errors="ignore")
+    return pd.DataFrame(data)
 
 
 # 영문 API 필드명 → 한글 열이름 (rename)
@@ -131,6 +131,10 @@ RENAME = {
 
 def preprocess(df):
     df = df.copy()
+    # 0) 직무정보: 코드 필드가 "http://lod.work.go.kr/task/중분류/_0301" 형태 → 끝의 코드만, 링크 열 제거
+    for c in [c for c in df.columns if c.endswith("_cd")]:
+        df[c] = df[c].str.rsplit("_", n=1).str[-1]
+    df = df.drop(columns=["centerURL", "centerLabel"], errors="ignore")
     # 1) 공백 제거, 빈 문자열 → 결측치 (replace)
     obj = df.select_dtypes("object").columns
     df[obj] = df[obj].apply(lambda s: s.str.strip()).replace("", np.nan)
@@ -156,12 +160,16 @@ def preprocess(df):
 
 
 if __name__ == "__main__":
+    RAW_DIR.mkdir(exist_ok=True)
+    OUT_DIR.mkdir(exist_ok=True)
     for name in [*APIS, *DUTY_APIS]:
         try:
-            df = preprocess(collect(name) if name in APIS else collect_duty(name))
+            raw = collect(name) if name in APIS else collect_duty(name)
         except Exception as e:
             print(f"[{name}] 실패: {e}")
             continue
-        out = DATA_DIR / f"work24_{name}.csv"
+        raw.to_csv(RAW_DIR / f"work24_{name}.csv", index=False, encoding="utf-8-sig")
+        df = preprocess(raw)
+        out = OUT_DIR / f"work24_{name}.csv"
         df.to_csv(out, index=False, encoding="utf-8-sig")
-        print(f"[{name}] {df.shape} → {out.name} | 남은 결측치 {df.isna().sum().sum()}개")
+        print(f"[{name}] 원본 {raw.shape} → 전처리 {df.shape} → {out.name} | 남은 결측치 {df.isna().sum().sum()}개")
