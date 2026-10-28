@@ -1,11 +1,19 @@
-서울시 일자리포털 채용정보
+[폴더 구성]
+raw/       출처에서 받은 그대로의 원본
+processed/ 전처리 결과 (code/ 의 수집 스크립트가 생성)
+data/      직접 만든 사전·평가셋 (tech_dictionary, cert_dictionary, cover_letter_types, eval_*)
+
+서울시 일자리포털 채용정보 (raw/서울시 일자리포털 채용정보.csv)
 https://data.seoul.go.kr/dataList/OA-23047/S/1/datasetView.do
 
-한국고용정보원_고용형태공시대상기업_20251231
+한국고용정보원_고용형태공시대상기업_20251231 (raw/한국고용정보원_고용형태공시대상기업_20251231.csv)
 https://www.data.go.kr/data/15119095/fileData.do
 
-한국고용정보원, 고용24 Open API (강소기업, 직업정보, 공통코드, 직무정보)
+한국고용정보원, 고용24 Open API (강소기업, 직업정보, 공통코드, 직무정보) (raw·processed/work24_*.csv, code/collect_work24.py)
 https://www.work24.go.kr/cm/e/b/0310/selectOpenApiSvcApprList.do
 
-한국산업인력공단_국가자격 종목 목록 정보_20251231 (qnet_cert.csv, cp949→utf-8-sig 변환)
+한국산업인력공단_국가자격 종목 목록 정보_20251231 (raw/ 원본 cp949, processed/qnet_cert.csv 는 utf-8-sig 변환)
 https://www.data.go.kr/data/15082998/fileData.do
+
+자기소개서 문항 (raw·processed/cover_letter_questions.csv, code/collect_cover_letter.py로 2026.10.28 수집: 기업유형별 전 직무 + 개발·데이터/IT·마케팅 직무 추가, 공고 1,263건·기업 571곳, 원본 37,798행 → 전처리 33,732행) - 하이잡 채용공고별 자소서 페이지
+https://www.haijob.co.kr/list (문항별 원문 URL은 CSV의 출처URL 컬럼)
