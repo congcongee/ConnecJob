@@ -1,0 +1,8 @@
+서울시 일자리포털 채용정보
+https://data.seoul.go.kr/dataList/OA-23047/S/1/datasetView.do
+
+한국고용정보원_고용형태공시대상기업_20251231
+https://www.data.go.kr/data/15119095/fileData.do
+
+한국고용정보원, 고용24 Open API (강소기업, 직업정보, 공통코드, 직무정보)
+https://www.work24.go.kr/cm/e/b/0310/selectOpenApiSvcApprList.do
