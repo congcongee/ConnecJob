@@ -37,7 +37,11 @@ DUTY_APIS = {
 # 직무정보 검색어. 필요에 맞게 수정
 DUTY_QUERIES = ["데이터 분석", "웹 개발", "회계", "마케팅", "인사관리", "간호", "영업", "디자인",
                 "디지털 마케팅", "광고", "고객관계관리",
-                "소프트웨어 개발", "데이터 엔지니어링", "인공지능", "정보보안", "클라우드"]
+                "소프트웨어 개발", "데이터 엔지니어링", "인공지능", "정보보안", "클라우드",
+                # 하이잡 자소서 직무분류 중 빠져 있던 직무
+                "재무", "금융", "법무", "총무", "사무행정", "채용관리", "교육훈련운영",
+                "경영기획", "서비스 기획", "상품기획", "홍보", "영업관리", "구매관리", "물류",
+                "생산관리", "품질관리", "기계설계", "전기설계", "연구개발", "고객상담"]
 DUTY_LIMIT = 20
 
 
@@ -147,8 +151,10 @@ def preprocess(df):
         num = pd.to_numeric(df[c], errors="coerce")
         if num.notna().sum() == df[c].notna().sum() and df[c].notna().any():
             df[c] = num
-    # 4) 결측치 대체 (fillna): 숫자 열은 중위수, 문자 열은 '정보없음'
+    # 4) 결측치 대체 (fillna): 숫자 열은 그룹별 중위수(강소기업은 업종대분류별) → 남으면 전체 중위수, 문자 열은 '정보없음'
     num_cols = df.select_dtypes("number").columns
+    if "superIndTpNm" in df.columns:
+        df[num_cols] = df[num_cols].fillna(df.groupby("superIndTpNm")[num_cols].transform("median"))
     df[num_cols] = df[num_cols].fillna(df[num_cols].median())
     df = df.fillna("정보없음")
     # 5) 한글 열이름 (rename)

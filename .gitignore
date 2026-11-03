@@ -2,3 +2,6 @@
 __pycache__/
 .ipynb_checkpoints/
 *.sqlite3
+.arena/
+# 100MB 초과 원본 (GitHub 업로드 불가) → 공공데이터포털에서 다시 받기
+data/raw/국민연금 가입 사업장 내역_*.csv
