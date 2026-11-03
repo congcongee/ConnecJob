@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConnecJob</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo+Black&family=Black+Han+Sans&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css">
+<style>
+:root{
+  --ink:#14112B; --brand:#1F06AC; --lime:#E3EF4F; --paper:#EDE9DD;  /* 흰 카드와 확실히 구분되도록 한 단계 진한 베이지 */ --white:#fff;
+  --muted:#5c5975; --tint:#eef1fc;
+  --line:3px solid var(--ink); --thin:2px solid var(--ink);
+  --match:6px 6px 0 var(--ink);   /* 굵은 그림자는 '매칭된 공고'에만 쓴다 */
+  --display:'Black Han Sans',Pretendard,sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--paper);font:16px/1.6 Pretendard,system-ui,sans-serif;color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.wrap{max-width:1200px;margin:0 auto;padding:0 40px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+h1,h2,h3{font-family:var(--display);font-weight:400;letter-spacing:-.01em;margin:0}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;font:800 15px/1 Pretendard,sans-serif;padding:13px 20px;border:var(--line);background:var(--white);color:var(--ink);cursor:pointer}
+.btn:hover{background:var(--lime)}
+.btn-primary{background:var(--brand);color:var(--white)}
+.btn-primary:hover{background:var(--ink)}
+.btn-lg{font-size:17px;padding:18px 28px}
+
+/* 헤더 */
+header{position:sticky;top:0;z-index:20;background:var(--paper);border-bottom:var(--line)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:24px;padding-top:12px;padding-bottom:12px}
+.logo{font:400 26px/1 var(--display);color:var(--brand)}
+nav ul{display:flex;gap:28px;list-style:none;margin:0;padding:0;font-size:15px;font-weight:700;color:var(--muted)}
+nav a{display:inline-block;padding:10px 0}
+nav a:hover{color:var(--ink)}
+.head-actions{display:flex;gap:10px}
+
+/* 히어로: 큰 영문 구호 → 한 줄 설명 → 경험이 공고가 되는 과정(가로) */
+.hero{padding-top:64px;padding-bottom:88px}
+.hero h1{font:400 clamp(64px,13vw,176px)/.9 'Archivo Black',sans-serif;letter-spacing:-.06em}
+.hero h1 .blue{color:var(--brand)}
+.hero h1 .tag{display:inline-block;margin-top:16px;background:var(--lime);border:4px solid var(--ink);padding:6px 20px 0;box-shadow:10px 10px 0 var(--ink)}
+.hero-foot{display:flex;justify-content:space-between;align-items:flex-end;gap:24px 40px;flex-wrap:wrap;margin:40px 0 56px}
+.hero-foot p{margin:0;font-size:19px;color:var(--muted);max-width:34em}
+.hero-foot p strong{display:block;font:400 clamp(26px,3.4vw,36px)/1.3 var(--display);color:var(--ink);margin-bottom:8px}
+.flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:32px}
+.flow > li{position:relative;background:var(--white);border:var(--line);padding:18px 20px}
+.flow > li + li::before{content:"";position:absolute;left:-35px;top:50%;width:32px;border-top:3px dashed var(--ink)}
+.flow h3{font:800 13px/1 Pretendard,sans-serif;color:var(--muted);margin-bottom:10px}
+.quote{font-size:16px;margin:0}
+.star{display:grid;grid-template-columns:auto 1fr;gap:6px 12px;font-size:15px}
+.star b{font:400 15px/1.6 var(--display);color:var(--brand)}
+.star .gap{color:var(--brand);font-weight:700;background:var(--tint);padding:2px 8px}
+.units{display:flex;flex-wrap:wrap;gap:8px}
+.units span{font-size:14px;font-weight:700;border:var(--thin);padding:4px 10px;background:var(--paper)}
+.flow > li.matched{background:var(--lime);box-shadow:var(--match)}
+
+/* 단계 */
+section.block{padding-top:88px;padding-bottom:88px;border-top:var(--line)}
+.sec-head{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;flex-wrap:wrap;margin-bottom:40px}
+.sec-head h2{font-size:clamp(32px,4.2vw,48px);line-height:1.15}
+.sec-head p{margin:12px 0 0;color:var(--muted);max-width:34em}
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));list-style:none;margin:0;padding:0;border:var(--line);background:var(--white)}
+.step{padding:24px 22px;display:flex;flex-direction:column;gap:10px}
+.step + .step{border-left:var(--line)}
+.step-no{font:400 34px/1 var(--display);color:var(--brand)}
+.step h3{font-size:22px;line-height:1.25}
+.step p{margin:0;font-size:15px;line-height:1.6;color:var(--muted)}
+
+/* 공고 카드 */
+.filters{display:flex;flex-wrap:wrap;border:var(--line);background:var(--white)}
+.filters button{min-height:44px;font:700 15px Pretendard,sans-serif;padding:12px 16px;border:0;background:var(--white);color:var(--ink);cursor:pointer}
+.filters button + button{border-left:var(--line)}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--white)}
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,270px),1fr));gap:28px;list-style:none;margin:0;padding:0}
+.job{background:var(--white);border:var(--line);box-shadow:var(--match);padding:22px;display:flex;flex-direction:column;gap:14px}
+.job-head{display:flex;gap:14px;align-items:center}
+.initial{width:48px;height:48px;flex:none;display:grid;place-items:center;background:var(--ink);color:var(--lime);font:400 22px/1 var(--display)}
+.co{display:block;font-size:14px;font-weight:600;color:var(--muted)}
+.size{font-size:13px;font-weight:700}
+.title{font-size:19px;font-weight:800;line-height:1.35}
+.meta{display:flex;gap:6px;flex-wrap:wrap;font-size:13px;font-weight:700}
+.meta span{border:var(--thin);padding:3px 9px}
+.meta .dday{background:var(--brand);border-color:var(--brand);color:var(--white)}
+.fit{border-top:var(--thin);padding-top:14px}
+.fit-row{display:flex;justify-content:space-between;font-size:14px;font-weight:800}
+.bar{display:flex;gap:4px;margin:8px 0 10px}
+.bar i{flex:1;height:10px;border:var(--thin);background:var(--white)}
+.bar i.on{background:var(--brand);border-color:var(--brand)}
+.why{margin:0;font-size:14px;line-height:1.55;color:var(--ink)}
+.why b{color:var(--brand)}
+.empty{grid-column:1/-1;padding:32px;border:var(--line);background:var(--white);font-weight:700}
+
+/* 마무리 */
+.cta{background:var(--brand);color:var(--white);border-top:var(--line)}
+.cta .wrap{padding-top:88px;padding-bottom:88px;display:flex;justify-content:space-between;align-items:center;gap:32px;flex-wrap:wrap}
+.cta h2{font-size:clamp(32px,4.2vw,48px);line-height:1.2}
+.cta .btn{background:var(--lime);color:var(--ink)}
+.cta .btn:hover{background:var(--white)}
+footer{background:var(--ink);color:#c9c5ef}
+footer .wrap{padding-top:28px;padding-bottom:28px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;font-size:14px}
+footer .logo{font-size:20px;color:var(--lime)}
+footer ul{display:flex;gap:24px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+
+/* 로그인 */
+.scrim{position:fixed;inset:0;background:rgba(20,17,43,.45);z-index:29}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(420px,100%);z-index:30;background:var(--paper);border-right:var(--line);padding:40px;display:flex;flex-direction:column;gap:18px;overflow:auto;transform:translateX(-100%);transition:transform .3s cubic-bezier(.2,.8,.2,1);visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+.drawer h2{font-size:30px;line-height:1.25;margin-top:8px}
+.drawer form{display:flex;flex-direction:column;gap:10px}
+.drawer label{font-size:14px;font-weight:700}
+.drawer input{min-height:48px;font:16px Pretendard,sans-serif;padding:12px 16px;border:var(--line);background:var(--white);color:var(--ink)}
+.drawer form .btn{margin-top:8px}
+.close{position:absolute;top:16px;right:16px;width:44px;height:44px;border:var(--line);background:var(--white);font-size:20px;cursor:pointer}
+
+@media (max-width:960px){
+  .hero{padding-top:40px;padding-bottom:64px}
+  .hero h1 .tag{box-shadow:6px 6px 0 var(--ink)}
+  .flow{grid-template-columns:1fr;gap:28px}
+  .flow > li + li::before{left:34px;top:-31px;width:0;height:28px;border-top:0;border-left:3px dashed var(--ink)}
+  .steps{grid-template-columns:1fr}
+  .step + .step{border-left:0;border-top:var(--line)}
+}
+@media (max-width:760px){
+  .wrap{padding:0 16px}
+  nav{display:none}
+  .head-actions .btn{padding:12px 14px;font-size:14px}
+  .logo{font-size:22px}
+  section.block{padding-top:64px;padding-bottom:64px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+
+<a class="sr-only" href="#main">본문 바로가기</a>
+
+<header>
+  <div class="wrap head">
+    <a class="logo" href="#">ConnecJob</a>
+    <nav aria-label="주요 메뉴">
+      <ul>
+        <li><a href="#steps">이용 방법</a></li>
+        <li><a href="#jobs">추천 공고</a></li>
+      </ul>
+    </nav>
+    <div class="head-actions">
+      <button class="btn" type="button" data-open-login>로그인</button>
+      <a class="btn btn-primary" href="#start">비회원으로 시작</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="wrap hero">
+    <h1>MATCH<br><span class="blue">YOUR</span> <span class="tag">JOB.</span></h1>
+    <div class="hero-foot">
+      <p><strong>적어 둔 경험이 지원할 공고가 됩니다</strong>프로젝트, 인턴, 동아리 경험을 적으면 STAR로 정리하고, 맞는 직무와 공고를 근거와 함께 보여 드려요.</p>
+      <a class="btn btn-primary btn-lg" href="#start" id="start">경험 적기</a>
+    </div>
+
+    <ol class="flow" aria-label="경험이 공고가 되는 과정 예시">
+      <li>
+        <h3>내가 적은 경험</h3>
+        <p class="quote">"학회에서 지역별 공공데이터 20만 건을 파이썬으로 정리해서 대시보드를 만들었어요."</p>
+      </li>
+      <li>
+        <h3>STAR로 정리</h3>
+        <div class="star">
+          <b>S</b><span>지역별 데이터가 흩어져 비교가 어려움</span>
+          <b>T</b><span>한눈에 비교하는 대시보드 제작</span>
+          <b>A</b><span>공공데이터 20만 건 정제, 시각화</span>
+          <b>R</b><span class="gap">결과가 비어 있어요. 회의 시간이 줄었나요?</span>
+        </div>
+      </li>
+      <li>
+        <h3>연결된 NCS 능력단위</h3>
+        <div class="units"><span>빅데이터 수집</span><span>데이터 전처리</span><span>데이터 시각화</span></div>
+      </li>
+      <li class="matched">
+        <h3>추천 공고</h3>
+        <p class="title" style="margin:0">노바랩스 데이터 분석 인턴</p>
+        <p style="margin:4px 0 0;font-weight:700">요구 역량 6개 중 5개를 이 경험이 채워요</p>
+      </li>
+    </ol>
+  </section>
+
+  <section class="block" id="steps" aria-labelledby="steps-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2 id="steps-h">경험 하나로 다섯 단계</h2>
+          <p>모든 추천에는 어느 경험에서 나왔는지가 함께 표시돼요.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li class="step"><span class="step-no">1</span><h3>STAR 카드</h3><p>경험을 상황, 과제, 행동, 결과로 나누고 빈 칸은 질문으로 채워요.</p></li>
+        <li class="step"><span class="step-no">2</span><h3>직무 추천</h3><p>경험과 맞닿은 NCS 능력단위로 어울리는 직무를 골라요.</p></li>
+        <li class="step"><span class="step-no">3</span><h3>공고와 회사</h3><p>그 직무를 뽑는 공고를 기업 규모별로 보여 주고 회사 정보도 함께 보여요.</p></li>
+        <li class="step"><span class="step-no">4</span><h3>보완점</h3><p>공고가 원하는데 아직 없는 역량과 관련 자격증, 학습 키워드를 알려 줘요.</p></li>
+        <li class="step"><span class="step-no">5</span><h3>자소서</h3><p>문항마다 쓸 경험을 짝지어 주고, 쓴 글을 공고 기준으로 첨삭해요.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block" id="jobs" aria-labelledby="jobs-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2 id="jobs-h">이런 공고가 추천돼요</h2>
+          <p>예시 경험 기준이에요. 내 경험을 적으면 내 공고로 바뀌어요.</p>
+        </div>
+        <div class="filters" role="group" aria-label="기업 규모">
+          <button type="button" aria-pressed="true" data-size="전체">전체</button>
+          <button type="button" aria-pressed="false" data-size="대기업">대기업</button>
+          <button type="button" aria-pressed="false" data-size="공공기관">공공기관</button>
+          <button type="button" aria-pressed="false" data-size="중견·중소">중견·중소</button>
+          <button type="button" aria-pressed="false" data-size="외국계">외국계</button>
+        </div>
+      </div>
+      <ul class="jobs" id="job-list" aria-live="polite"></ul>
+    </div>
+  </section>
+
+  <section class="cta" aria-labelledby="cta-h">
+    <div class="wrap">
+      <h2 id="cta-h">경험 하나만 적어 보세요.<br>맞는 공고부터 보여 드릴게요.</h2>
+      <a class="btn btn-lg" href="#start">경험 적기</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="logo">ConnecJob</span>
+    <ul><li><a href="#">이용약관</a></li><li><a href="#">개인정보처리방침</a></li><li>2026 ConnecJob</li></ul>
+  </div>
+</footer>
+
+<div class="scrim" hidden data-close-login></div>
+<aside class="drawer" id="login" role="dialog" aria-modal="true" aria-labelledby="login-h" aria-hidden="true">
+  <button class="close" type="button" aria-label="로그인 닫기" data-close-login>✕</button>
+  <span class="logo">ConnecJob</span>
+  <h2 id="login-h">로그인하고<br>저장한 경험 이어 보기</h2>
+  <form onsubmit="event.preventDefault()">
+    <label for="email">이메일</label>
+    <input id="email" type="email" autocomplete="email" required>
+    <label for="pw">비밀번호</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn btn-primary btn-lg" type="submit">로그인</button>
+  </form>
+  <p style="margin-top:auto;font-size:14px;color:var(--muted)">계정이 없나요? <a href="#" style="color:var(--brand);font-weight:800">회원가입</a></p>
+</aside>
+
+<script>
+// 예시 데이터: 실제 서비스에선 Django 뷰가 추천 결과를 넘겨준다
+const jobs = [
+  { co:'노바랩스', size:'중견·중소', title:'데이터 분석 인턴', loc:'서울 성수', type:'인턴', dday:'D-7', hit:5, req:6, why:'E03 공공데이터 정제와 시각화', need:'SQL' },
+  { co:'한빛에너지공사', size:'공공기관', title:'정보화 일반직 신입', loc:'대전', type:'신입', dday:'D-12', hit:4, req:5, why:'E01 Django 예약관리 웹서비스', need:'정보처리기사' },
+  { co:'그린웨이브', size:'대기업', title:'서비스 기획 신입', loc:'경기 판교', type:'신입', dday:'D-3', hit:4, req:6, why:'E05 사용자 인터뷰 20건', need:'데이터 기반 의사결정' },
+  { co:'모아데이터코리아', size:'외국계', title:'AI 데이터 큐레이터', loc:'원격', type:'계약직', dday:'D-20', hit:3, req:5, why:'E03 데이터 정제', need:'영어 문서 작성' }
+];
+const list = document.getElementById('job-list');
+function render(size){
+  const rows = jobs.filter(j => size === '전체' || j.size === size);
+  list.innerHTML = rows.length ? rows.map(j => `
+    <li class="job">
+      <div class="job-head"><span class="initial" aria-hidden="true">${j.co[0]}</span>
+        <div><span class="co">${j.co}</span><span class="size">${j.size}</span></div></div>
+      <span class="title">${j.title}</span>
+      <div class="meta"><span>${j.loc}</span><span>${j.type}</span><span class="dday">${j.dday}</span></div>
+      <div class="fit">
+        <div class="fit-row"><span>요구 역량</span><span>${j.req}개 중 ${j.hit}개</span></div>
+        <div class="bar" aria-hidden="true">${Array.from({length:j.req}, (_, i) => `<i class="${i < j.hit ? 'on' : ''}"></i>`).join('')}</div>
+        <p class="why"><b>근거</b> ${j.why}<br><b>보완</b> ${j.need}</p>
+      </div>
+    </li>`).join('') : '<li class="empty">이 규모의 추천 공고가 아직 없어요. 다른 규모를 골라 보세요.</li>';
+}
+document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  render(b.dataset.size);
+}));
+render('전체');
+
+const drawer = document.getElementById('login'), scrim = document.querySelector('.scrim');
+let opener = null;
+function setLogin(open){
+  drawer.classList.toggle('open', open);
+  drawer.setAttribute('aria-hidden', !open);
+  scrim.hidden = !open;
+  if (open) { opener = document.activeElement; document.getElementById('email').focus(); }
+  else if (opener) opener.focus();
+}
+document.querySelectorAll('[data-open-login]').forEach(b => b.addEventListener('click', () => setLogin(true)));
+document.querySelectorAll('[data-close-login]').forEach(b => b.addEventListener('click', () => setLogin(false)));
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && drawer.classList.contains('open')) setLogin(false); });
+</script>
+</body>
+</html>
