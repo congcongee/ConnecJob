@@ -1,8 +1,44 @@
-서울시 일자리포털 채용정보
+서울시 일자리포털 채용정보 (서울 열린데이터광장)
 https://data.seoul.go.kr/dataList/OA-23047/S/1/datasetView.do
 
-한국고용정보원_고용형태공시대상기업_20251231
+고용24 Open API
+https://www.work24.go.kr/cm/e/b/0310/selectOpenApiSvcApprList.do
+
+한국고용정보원 고용형태공시대상기업 (공공데이터포털)
 https://www.data.go.kr/data/15119095/fileData.do
 
-한국고용정보원, 고용24 Open API (강소기업, 직업정보, 공통코드, 직무정보)
-https://www.work24.go.kr/cm/e/b/0310/selectOpenApiSvcApprList.do
+한국고용정보원 구인표준직무기술서 (공공데이터포털)
+https://www.data.go.kr/data/15150885/fileData.do
+
+한국산업인력공단 국가자격 종목 목록 (공공데이터포털)
+https://www.data.go.kr/data/15082998/fileData.do
+
+한국산업인력공단 국가직무능력표준(NCS) 정보 (공공데이터포털)
+https://www.data.go.kr/data/15083321/fileData.do
+
+한국산업인력공단 NCS 능력단위별 자격종목 (공공데이터포털)
+https://www.data.go.kr/data/15157045/fileData.do
+
+국민연금공단 국민연금 가입 사업장 내역 (공공데이터포털)
+https://www.data.go.kr/data/15083277/fileData.do
+
+인사혁신처 공공채용정보 - 나라일터 (공공데이터포털)
+https://www.data.go.kr/data/15151560/fileData.do
+
+공정거래위원회 대규모기업집단 소속회사 재무현황 (공공데이터포털)
+https://www.data.go.kr/data/15091895/openapi.do
+
+산업통상부 외국인투자기업 (공공데이터포털)
+https://www.data.go.kr/data/15054396/fileData.do
+
+공공기관 채용공시 - 잡알리오 Open API
+https://opendata.alio.go.kr/new/odaApiMng/recrutInquiryList.do
+
+하이잡 자기소개서 문항
+https://www.haijob.co.kr/list
+
+인크루트 채용공고
+https://job.incruit.com/jobdb_list/searchjob.asp
+
+잡다 채용공고
+https://www.jobda.im/position
