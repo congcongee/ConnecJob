@@ -5,12 +5,12 @@ API 키는 data/.env 에서 os.getenv 로 읽는다 (코드에 하드코딩 금�
 """
 import os
 import time
-import xml.etree.ElementTree as ET
 from pathlib import Path
 
 import numpy as np
 import pandas as pd
 import requests
+from bs4 import BeautifulSoup
 from dotenv import load_dotenv
 
 DATA_DIR = Path(__file__).parent.parent / "data"
@@ -51,25 +51,31 @@ def call(env, endpoint, params):
         raise RuntimeError(f"{env} 가 .env 에 없습니다")
     r = requests.get(BASE + endpoint, params={"authKey": key, "returnType": "XML", **params}, timeout=30)
     r.raise_for_status()
-    root = ET.fromstring(r.content)
-    err = root.findtext("error")
+    soup = BeautifulSoup(r.text, "xml")  # 01_python ch14 2.3 XML 웹데이터 수집 방식
+    err = soup.select_one("error")
     if err:
-        raise RuntimeError(err.strip())
-    return root
+        raise RuntimeError(err.text.strip())
+    return soup
 
 
-def rows(root, tag):
-    return [{c.tag: (c.text or "").strip() for c in el} for el in root.iter(tag)]
+def rows(soup, tag):
+    return [{c.name: c.text.strip() for c in el.find_all(recursive=False)} for el in soup.select(tag)]
 
 
-def code_rows(root):
+def child_text(el, tag):
+    """바로 아래 자식 태그의 text (select_one 은 손자 태그까지 찾아서 oneDepth 안의 twoDepth 값이 섞임)"""
+    c = el.find(tag, recursive=False)
+    return c.text.strip() if c else None
+
+
+def code_rows(soup):
     # 공통코드(지역)는 oneDepth > twoDepth 계층 → 평탄화
     out = []
-    for one in root.iter("oneDepth"):
-        out.append({"regionCd": one.findtext("regionCd"), "regionNm": one.findtext("regionNm"), "superCd": "-", "depth": 1})
-        for two in one.iter("twoDepth"):
-            out.append({"regionCd": two.findtext("regionCd"), "regionNm": two.findtext("regionNm"),
-                        "superCd": two.findtext("superCd"), "depth": 2})
+    for one in soup.select("oneDepth"):
+        out.append({"regionCd": child_text(one, "regionCd"), "regionNm": child_text(one, "regionNm"), "superCd": "-", "depth": 1})
+        for two in one.select("twoDepth"):
+            out.append({"regionCd": child_text(two, "regionCd"), "regionNm": child_text(two, "regionNm"),
+                        "superCd": child_text(two, "superCd"), "depth": 2})
     return out
 
 
@@ -81,10 +87,10 @@ def collect(name):
         return pd.DataFrame(rows(call(env, endpoint, params), tag))
     data, page = [], 1
     while True:
-        root = call(env, endpoint, {**params, "startPage": page, "display": size})
-        batch = rows(root, tag)
+        soup = call(env, endpoint, {**params, "startPage": page, "display": size})
+        batch = rows(soup, tag)
         data += batch
-        total = int(root.findtext("total") or 0)
+        total = int(child_text(soup.find(), "total") or 0)
         if not batch or len(data) >= total:
             break
         page += 1

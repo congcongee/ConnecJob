@@ -49,16 +49,16 @@ def preprocess_seoul_jobs(df):
     df["임금협의가능"] = df["임금조건"].str.contains("재조정").map({True: "Y", False: "N"})
 
     # 고용형태 '기간의 정함이 있는 근로계약3 개월/ ...' → 고용구분(정규/계약), 계약기간(개월)
-    df["고용구분"] = df["고용형태"].map(lambda x: "계약" if "정함이 있는" in x else "정규")
+    df["고용구분"] = df["고용형태"].map(lambda x: "계약" if "정함이 있는" in x else "정규", na_action="ignore")
     df["계약기간(개월)"] = pd.to_numeric(df["고용형태"].str.extract(r"근로계약(\d+) ?개월")[0], errors="coerce")
 
     # 모집직종 '응용 소프트웨어 개발자(133200)' → 코드는 직종코드 열에 있으므로 이름만
     df["모집직종"] = df["모집직종"].str.replace(r"\(\d+\)$", "", regex=True).str.strip()
-    df["모집인원"] = pd.to_numeric(df["모집인원"], errors="coerce").astype("int")
+    df["모집인원"] = pd.to_numeric(df["모집인원"], errors="coerce").astype("Int64")  # API 대량 수집분엔 빈 값이 있어 결측 허용 정수
     # 주소 앞 우편번호 '(08377) ' / '08377 ' 제거
     for c in ["회사주소", "근무예정지"]:
         df[c] = df[c].str.replace(r"^\(?\d{5}\)?\s*", "", regex=True)
-    df["시도"] = df["근무지역"].map(lambda x: x.split()[0])
+    df["시도"] = df["근무지역"].map(lambda x: x.split()[0], na_action="ignore")
 
     # 값이 하나뿐인 열은 분석에 쓸모없어 제거 (연금4대보험 : 전부 동일)
     df = df.drop(columns=[c for c in df.columns if df[c].nunique(dropna=False) == 1])
@@ -93,6 +93,40 @@ def preprocess_job_desc(df):
         df[c] = df[c].str.replace(r"\s*,\s*", ",", regex=True)
     df = df.fillna("정보없음")
     return df.drop_duplicates().reset_index(drop=True)  # 완전히 같은 행 1,169건 제거
+
+
+def preprocess_nara(df):
+    df = clean_text(df.copy())
+    df["접수시작일"] = pd.to_datetime(df["접수시작일"])
+    df["접수마감일"] = pd.to_datetime(df["접수마감일"])
+    df["접수기간(일)"] = (df["접수마감일"] - df["접수시작일"]).dt.days + 1
+    df["접수기간(일)"] = df["접수기간(일)"].where(df["접수기간(일)"] >= 1)  # 원본 47건은 마감일이 시작일보다 앞서 결측 처리
+    df[["조회수", "선발예정인원"]] = df[["조회수", "선발예정인원"]].apply(pd.to_numeric, errors="coerce")
+    df["출처URL"] = "https://www.gojobs.go.kr/apmView.do?empmnsn=" + df["일련번호"]
+    obj = df.select_dtypes("object").columns
+    df[obj] = df[obj].fillna("정보없음")
+    return df.drop_duplicates("일련번호").reset_index(drop=True)
+
+
+def read_html_xls(path):
+    """'.xls' 로 받지만 실제로는 HTML 표 (pd.read_html 은 바깥 레이아웃 표까지 읽어 수 분 걸림)
+    → BeautifulSoup 으로 표 안에 표가 없는 가장 안쪽 표만 읽음 (01_python ch14 select 방식)"""
+    from bs4 import BeautifulSoup
+    with open(path, encoding="utf-8") as f:
+        soup = BeautifulSoup(f.read(), "lxml")
+    tab = max((t for t in soup.select("table") if not t.select("table")), key=lambda t: len(t.select("tr")))
+    rows = [[td.text.strip() for td in tr.select("td, th")] for tr in tab.select("tr")]
+    return pd.DataFrame(rows[1:], columns=rows[0], dtype=str)
+
+
+def preprocess_fdi(df):
+    df = clean_text(df.copy())
+    df["외투기업최초등록일자"] = pd.to_datetime(df["외투기업최초등록일자"], format="%Y%m%d", errors="coerce")
+    df["시도"] = df["주소"].map(lambda x: x.split()[0], na_action="ignore")
+    df = df.drop(columns=["전화번호", "우편번호"])  # 개인기업은 대표 개인 연락처일 수 있어 제거
+    obj = df.select_dtypes("object").columns
+    df[obj] = df[obj].fillna("정보없음")
+    return df.drop_duplicates().reset_index(drop=True)
 
 
 NPS_RATE = 0.095  # 2026년 국민연금 보험료율 (고지금액 = 기준소득월액 × 요율)
@@ -131,13 +165,19 @@ JOBS = {
     "한국고용정보원_고용형태공시대상기업_20251231.csv": ("employment_disclosure.csv", preprocess_disclosure),
     "한국고용정보원_구인표준직무기술서_20250901.csv": ("job_desc_standard.csv", preprocess_job_desc),
     "국민연금 가입 사업장 내역_20261023.csv": ("nps_workplace.csv", preprocess_nps),
+    "인사혁신처_공공채용정보_20251231.csv": ("nara_recruit.csv", preprocess_nara),
+    "산업통상부_외국인투자기업정보.xls": ("fdi_companies.csv", preprocess_fdi),
 }
+UTF8_SOURCES = {"인사혁신처_공공채용정보_20251231.csv"}  # 나머지 원본은 cp949
 
 
 if __name__ == "__main__":
     OUT_DIR.mkdir(exist_ok=True)
     for src, (out, func) in JOBS.items():
-        raw = pd.read_csv(RAW_DIR / src, encoding="cp949", dtype=str)
+        if src.endswith(".xls"):
+            raw = read_html_xls(RAW_DIR / src)
+        else:
+            raw = pd.read_csv(RAW_DIR / src, encoding="utf-8-sig" if src in UTF8_SOURCES else "cp949", dtype=str)
         na = raw.isna().sum()
         print(f"== {src}\n   원본 결측치 : {na[na > 0].to_dict()}")
         df = func(raw)
@@ -151,3 +191,7 @@ if __name__ == "__main__":
     assert not pd.read_csv(OUT_DIR / "job_desc_standard.csv").duplicated().any()
     n = pd.read_csv(OUT_DIR / "nps_workplace.csv")
     assert (n["가입자수"] >= NPS_MIN_MEMBERS).all() and n["추정평균월소득"].between(0, 7_000_000).all()
+    g = pd.read_csv(OUT_DIR / "nara_recruit.csv")
+    assert g["일련번호"].is_unique and (g["접수기간(일)"].dropna() >= 1).all()
+    f = pd.read_csv(OUT_DIR / "fdi_companies.csv")
+    assert len(f) > 20000 and f["회사명(한글)"].ne("정보없음").all()

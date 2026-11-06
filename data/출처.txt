@@ -1,35 +1,44 @@
-[폴더 구성]
-raw/       출처에서 받은 그대로의 원본
-processed/ 전처리 결과 (code/ 의 수집 스크립트가 생성)
-data/      직접 만든 사전·평가셋 (tech_dictionary, cert_dictionary, cover_letter_types, eval_*)
-
-서울시 일자리포털 채용정보 (raw/서울시 일자리포털 채용정보.csv, processed/seoul_jobs.csv, code/preprocess_files.py)
+서울시 일자리포털 채용정보 (서울 열린데이터광장)
 https://data.seoul.go.kr/dataList/OA-23047/S/1/datasetView.do
 
-한국고용정보원_고용형태공시대상기업_20251231 (raw/한국고용정보원_고용형태공시대상기업_20251231.csv, processed/employment_disclosure.csv, code/preprocess_files.py)
-https://www.data.go.kr/data/15119095/fileData.do
-
-한국고용정보원, 고용24 Open API (강소기업, 직업정보, 공통코드, 직무정보) (raw·processed/work24_*.csv, code/collect_work24.py)
+고용24 Open API
 https://www.work24.go.kr/cm/e/b/0310/selectOpenApiSvcApprList.do
 
-한국산업인력공단_국가자격 종목 목록 정보_20251231 (raw/ 원본 cp949, processed/qnet_cert.csv 는 utf-8-sig 변환)
-https://www.data.go.kr/data/15082998/fileData.do
+한국고용정보원 고용형태공시대상기업 (공공데이터포털)
+https://www.data.go.kr/data/15119095/fileData.do
 
-자기소개서 문항 (raw·processed/cover_letter_questions.csv, code/collect_cover_letter.py로 2026.10.28 수집: 기업유형별 전 직무 + 개발·데이터/IT·마케팅 직무 추가, 공고 1,263건·기업 571곳, 원본 37,798행 → 전처리 33,732행) - 하이잡 채용공고별 자소서 페이지
-https://www.haijob.co.kr/list (문항별 원문 URL은 CSV의 출처URL 컬럼)
-
-한국고용정보원_구인표준직무기술서_20250901 (raw/한국고용정보원_구인표준직무기술서_20250901.csv, processed/job_desc_standard.csv, code/preprocess_files.py)
+한국고용정보원 구인표준직무기술서 (공공데이터포털)
 https://www.data.go.kr/data/15150885/fileData.do
 
-국민연금공단_국민연금 가입 사업장 내역 (raw/국민연금 가입 사업장 내역_20261023.csv 는 115MB라 .gitignore 처리 → 아래 링크에서 다시 받기, processed/nps_workplace.csv, code/preprocess_files.py: 등록 사업장 중 가입자 30인 이상 52,910곳, 2026년 9월분)
-https://www.data.go.kr/data/15083277/fileData.do
-  → processed/company_nps.csv : 하이잡 기업명과 매칭한 결과 (code/match_company.py, 571곳 중 465곳 매칭)
+한국산업인력공단 국가자격 종목 목록 (공공데이터포털)
+https://www.data.go.kr/data/15082998/fileData.do
 
-한국산업인력공단_국가직무능력표준 정보_20251231 (raw/ 원본 cp949, processed/ncs_units.csv, code/collect_ncs.py: 능력단위 13,442개 전체, 정의·분류명은 고용24 직무데이터사전 API로 보강 → raw/work24_duty_ncs.csv)
+한국산업인력공단 국가직무능력표준(NCS) 정보 (공공데이터포털)
 https://www.data.go.kr/data/15083321/fileData.do
 
-한국산업인력공단_NCS능력단위별_자격종목조회_20251231 (raw/ 원본 cp949, processed/ncs_cert.csv, code/collect_ncs.py)
+한국산업인력공단 NCS 능력단위별 자격종목 (공공데이터포털)
 https://www.data.go.kr/data/15157045/fileData.do
 
-청년 일자리 올인원 지원 서비스 Open API - 공공기관 채용공시 (raw·processed/alio_recruit.csv, code/collect_alio.py)
+국민연금공단 국민연금 가입 사업장 내역 (공공데이터포털)
+https://www.data.go.kr/data/15083277/fileData.do
+
+인사혁신처 공공채용정보 - 나라일터 (공공데이터포털)
+https://www.data.go.kr/data/15151560/fileData.do
+
+공정거래위원회 대규모기업집단 소속회사 재무현황 (공공데이터포털)
+https://www.data.go.kr/data/15091895/openapi.do
+
+산업통상부 외국인투자기업 (공공데이터포털)
+https://www.data.go.kr/data/15054396/fileData.do
+
+공공기관 채용공시 - 잡알리오 Open API
 https://opendata.alio.go.kr/new/odaApiMng/recrutInquiryList.do
+
+하이잡 자기소개서 문항
+https://www.haijob.co.kr/list
+
+인크루트 채용공고
+https://job.incruit.com/jobdb_list/searchjob.asp
+
+잡다 채용공고
+https://www.jobda.im/position
