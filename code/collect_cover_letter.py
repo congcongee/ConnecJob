@@ -7,15 +7,14 @@ robots.txt 전체 허용, 이용약관에 자동수집 금지 조항 없음 (202
 data/processed/cover_letter_questions.csv (utf-8-sig) 로 저장.
 """
 import json
-import re
 import time
 import urllib.parse
 from datetime import datetime
-from html import unescape
 from pathlib import Path
 
 import pandas as pd
 import requests
+from bs4 import BeautifulSoup
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 BASE = "https://www.haijob.co.kr"
@@ -53,8 +52,9 @@ def list_postings(ctype, tasks, limit):
     q = json.dumps({"company": [ctype], "task": tasks, "hire": [], "region": []})
     out, page = [], 1
     while len(out) < limit:
-        html = get("/list", {"q": q, "pageNo": page})
-        items = re.findall(r'href="/posting/(\d+)" start="(\d+)" end="(\d+)"', html)
+        soup = BeautifulSoup(get("/list", {"q": q, "pageNo": page}), "html.parser")
+        # end 가 빈 공고(상시채용)는 마감일 필터를 못 해서 제외
+        items = [(a["href"].split("/")[-1], a["start"], a["end"]) for a in soup.select('[href^="/posting/"][end]') if a["end"]]
         if not items:
             break
         for pid, _, end in items:
@@ -67,16 +67,23 @@ def list_postings(ctype, tasks, limit):
     return out[:limit]
 
 
+def js_arg(script, prefix):
+    """<script> 안 'const x = f('값')' 의 값 (공고 제목·직무 JSON 은 HTML 태그가 아니라 자바스크립트 변수로만 있음)"""
+    return script.split(prefix, 1)[1].split("')", 1)[0] if prefix in script else None
+
+
 def parse_posting(html):
     """공고 페이지 → (기업명, 공고제목, [직무 dict])"""
-    company = re.search(r'<div class="companyName">\s*(.*?)\s*</div>', html)
-    title = re.search(r"const postingTitle = decodeURIComponent\('([^']*)'\)", html)
-    tasks = re.search(r"const postingTasks = parseEncodedStringifiedJSON\('([^']*)'\)", html)
+    soup = BeautifulSoup(html, "html.parser")
+    company = soup.select_one("div.companyName")
+    script = "\n".join(s.string or "" for s in soup.select("script"))
+    title = js_arg(script, "const postingTitle = decodeURIComponent('")
+    tasks = js_arg(script, "const postingTasks = parseEncodedStringifiedJSON('")
     if not (company and tasks):
         return None
-    return (unescape(company.group(1)).strip(),
-            urllib.parse.unquote(title.group(1)) if title else "",
-            json.loads(urllib.parse.unquote(tasks.group(1))))
+    return (company.text.strip(),
+            urllib.parse.unquote(title) if title else "",
+            json.loads(urllib.parse.unquote(tasks)))
 
 
 def classify(text, types):
@@ -102,6 +109,11 @@ def to_rows(pid, end_dt, size, parsed):
     } for task in tasks for item in task.get("applicationItems", [])]
 
 
+def keep_removed(new, old):
+    """이번 수집에 없는 이전 공고(하이잡에서 내려간 공고)의 원본 행을 남김"""
+    return pd.concat([new, old[~old["posting_id"].isin(new["posting_id"])]], ignore_index=True)
+
+
 def preprocess(raw, types):
     df = raw.copy()
     # 1) 공백 정리, 빈 문항 제거
@@ -117,18 +129,20 @@ def preprocess(raw, types):
 
 
 def _selftest(types):
-    html = ('<div class="companyName"> 테스트(주) </div>'
+    html = ('<div class="companyName"> 테스트(주) </div><script>'
             "const postingTitle = decodeURIComponent('%EC%8B%A0%EC%9E%85');"
             "const postingTasks = parseEncodedStringifiedJSON('"
             + urllib.parse.quote(json.dumps([{"title": "백엔드", "taskType": "6", "hireType": "1",
                                               "applicationItems": [{"name": "지원한 이유와  입사 후 목표", "limit": 700}]}]))
-            + "');")
+            + "');</script>")
     rows = to_rows("1", datetime(2026, 1, 1), "대기업", parse_posting(html))
     assert rows == [{"posting_id": "1", "기업명": "테스트(주)", "기업규모": "대기업", "공고제목": "신입",
                      "직무": "백엔드", "직무분류": "개발·데이터/IT·인터넷", "채용형태": "신입", "마감일": "2026-01-01",
                      "문항": "지원한 이유와  입사 후 목표", "글자수": 700, "출처URL": f"{BASE}/posting/1"}], rows
     df = preprocess(pd.DataFrame(rows * 2), types)  # 중복 1건 제거 + 공백 정리
     assert df[["q_id", "문항유형", "문항"]].values.tolist() == [["Q00001", "지원동기·포부", "지원한 이유와 입사 후 목표"]]
+    old = pd.DataFrame([{**rows[0], "posting_id": "2"}, {**rows[0], "문항": "옛 문항"}])
+    assert keep_removed(pd.DataFrame(rows), old)["posting_id"].tolist() == ["1", "2"]  # 내려간 공고 2만 추가, 공고 1은 새 수집본
 
 
 if __name__ == "__main__":
@@ -154,9 +168,14 @@ if __name__ == "__main__":
                 rows += to_rows(pid, end_dt, size, parsed)
 
     raw = pd.DataFrame(rows)
+    raw_path = DATA_DIR / "raw" / "cover_letter_questions.csv"
+    if raw_path.exists():
+        n = raw["posting_id"].nunique()
+        raw = keep_removed(raw, pd.read_csv(raw_path, dtype={"posting_id": str}))
+        print(f"하이잡에서 내려간 이전 공고 {raw['posting_id'].nunique() - n}건 유지")
     (DATA_DIR / "raw").mkdir(exist_ok=True)
     (DATA_DIR / "processed").mkdir(exist_ok=True)
-    raw.to_csv(DATA_DIR / "raw" / "cover_letter_questions.csv", index=False, encoding="utf-8-sig")
+    raw.to_csv(raw_path, index=False, encoding="utf-8-sig")
     df = preprocess(raw, types)
     df.to_csv(DATA_DIR / "processed" / "cover_letter_questions.csv", index=False, encoding="utf-8-sig")
     print(f"원본 {raw.shape} → 전처리 {df.shape} | 공고 {df['posting_id'].nunique()}건, 기업 {df['기업명'].nunique()}곳, 실패 {len(failed)}건")

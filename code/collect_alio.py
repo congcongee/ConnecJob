@@ -3,7 +3,7 @@
 API 키는 data/.env 의 ALIO_KEY 를 os.getenv 로 읽는다 (코드에 하드코딩 금지).
 원본은 data/raw/alio_recruit.csv, 전처리 결과는 data/processed/alio_recruit.csv (utf-8-sig) 로 저장.
 
-전처리 기준 (09_Project/02_119_데이터_전처리_통합.ipynb 방식)
+전처리 기준 (01_python ch11·ch13 방식)
 - 429/5xx 는 재시도, resultCode 확인
 - 영문 필드명 → 한글 열이름 (rename)
 - 공고 시작/종료일 YYYYMMDD → 날짜형 (to_datetime)

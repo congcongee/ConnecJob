@@ -138,3 +138,39 @@ CRM 마케팅,직무영역,CRM마케팅|리텐션 마케팅|CRM 캠페인
 마케팅 데이터 분석,직무영역,마케팅 분석|마케팅분석|마케팅 데이터분석|데이터마케팅|데이터 마케팅
 SEO,직무영역,검색엔진 최적화|검색엔진최적화
 A/B 테스트,직무영역,AB테스트|A/B테스트|AB 테스트
+Django,프레임워크,django|장고
+FastAPI,프레임워크,fastapi|Fast API
+Laravel,프레임워크,laravel|라라벨
+Vue.js,프레임워크,Vue|vue|VueJS|vue.js|뷰JS
+JPA,프레임워크,jpa|Spring Data JPA
+Firebase,클라우드·인프라,firebase|파이어베이스
+LangChain,AI·데이터,langchain|Langchain|랭체인
+FAISS,AI·데이터,faiss|Faiss
+Selenium,테스트·QA,selenium|셀레니움
+JIRA,협업도구,Jira|jira|지라
+FreeRTOS,임베디드·HW,freertos
+RTOS,임베디드·HW,rtos|실시간 운영체제
+UART,임베디드·HW,uart
+I2C,임베디드·HW,i2c|I²C
+Cisco,웹·네트워크,cisco|시스코
+Altium Designer,설계·CAD,Altium|altium|알티움
+OrCAD,설계·CAD,Orcad|orcad|OR-CAD
+PSpice,설계·CAD,Pspice|pspice
+오실로스코프,임베디드·HW,Oscilloscope|오실로스코우프
+Pandas,AI·데이터,pandas|판다스
+NumPy,AI·데이터,numpy|Numpy|넘파이
+Matplotlib,AI·데이터,matplotlib|맷플롯립
+Seaborn,AI·데이터,seaborn|씨본
+scikit-learn,AI·데이터,sklearn|Scikit-learn|사이킷런|싸이킷런
+Keras,AI·데이터,keras|케라스
+Hugging Face,AI·데이터,HuggingFace|huggingface|허깅페이스|Transformers
+자연어처리,AI·데이터,NLP|자연어 처리
+웹크롤링,AI·데이터,크롤링|웹 크롤링|스크래핑|BeautifulSoup|beautifulsoup
+Airflow,AI·데이터,airflow|Apache Airflow|에어플로우
+Spark,AI·데이터,spark|Apache Spark|PySpark|pyspark|스파크
+Kafka,AI·데이터,kafka|Apache Kafka|카프카
+Flask,프레임워크,flask|플라스크
+LightGBM,AI·데이터,lightgbm|LGBM
+XGBoost,AI·데이터,xgboost|XGB
+CatBoost,AI·데이터,catboost
+RAG,AI·데이터,검색 증강 생성|Retrieval-Augmented Generation

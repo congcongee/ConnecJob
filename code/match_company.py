@@ -64,7 +64,8 @@ def match(name, agg):
             return c, "정확"
     for c in cands:
         if len(c) >= PREFIX_MIN:
-            hit = [i for i in agg.index if i.startswith(c) and PREFIX_REST.fullmatch(i[len(c):])]  # 가입자수 내림차순
+            starts = agg.index[agg.index.str.startswith(c)]  # pandas str.startswith, 가입자수 내림차순 유지
+            hit = [i for i in starts if PREFIX_REST.fullmatch(i[len(c):])]
             if len(hit):
                 return hit[0], "접두"
     return None, None
@@ -83,7 +84,6 @@ def _selftest():
     assert match("삼성생명", agg) == ("삼성생명보험", "접두")
     assert match("KBS", agg) == (None, None)  # 계열사(KBS비즈니스)로 잘못 연결하지 않음
     assert match("LS MnM", agg) == (None, None)  # 첫 단어(LS)만으로는 매칭하지 않음
-
 
 if __name__ == "__main__":
     _selftest()
