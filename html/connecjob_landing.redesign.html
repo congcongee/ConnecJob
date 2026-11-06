@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ConnecJob — 적어 둔 경험이 지원할 공고가 됩니다</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css">
+<style>
+/* 방향: 한글을 그림처럼. 자모를 쪼개고 다시 짜듯, 경험을 쪼개 공고로 다시 짠다.
+   색은 종이·먹·남(브랜드)·주홍 넷. 주홍은 '비어 있음/보완'에만 쓴다. */
+:root{
+  --paper:#F5F5F2; --white:#FFFFFF; --ink:#17171A; --mute:#5E5E66;
+  --brand:#1F06AC; --red:#CC2A14; --hair:rgba(23,23,26,.14);
+  --u:8px;                       /* 모든 간격은 8의 배수 */
+  --rule:1.5px solid var(--ink);
+  --sans:'Pretendard Variable',Pretendard,system-ui,sans-serif;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);font:400 16px/1.65 var(--sans);color:var(--ink);-webkit-font-smoothing:antialiased;word-break:keep-all;font-feature-settings:"ss06"}
+a{color:inherit;text-decoration:none}
+:focus-visible{outline:3px solid var(--brand);outline-offset:3px}
+.wrap{max-width:1240px;margin:0 auto;padding:0 40px}
+.sr-only{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+.sr-only:focus{position:fixed;top:8px;left:8px;width:auto;height:auto;clip:auto;z-index:99;background:var(--ink);color:var(--white);padding:8px 16px}
+h1,h2,h3{margin:0;font-weight:800;letter-spacing:-.035em}
+
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:48px;font:700 15px/1 var(--sans);padding:0 24px;border:var(--rule);background:transparent;color:var(--ink);cursor:pointer;transition:background .15s,color .15s,border-color .15s}
+.btn:hover{background:var(--ink);color:var(--white)}
+.btn-primary{background:var(--brand);border-color:var(--brand);color:var(--white)}
+.btn-primary:hover{background:var(--ink);border-color:var(--ink)}
+.btn-lg{min-height:56px;font-size:17px;padding:0 32px}
+
+/* 헤더 */
+header{position:sticky;top:0;z-index:20;background:rgba(245,245,242,.94);backdrop-filter:blur(8px);border-bottom:1px solid var(--hair)}
+.head{display:flex;align-items:center;justify-content:space-between;gap:24px;height:72px}
+.head-left{display:flex;align-items:center;gap:16px}
+.logo{font:800 22px/1 var(--sans);letter-spacing:-.04em;color:var(--brand)}
+.burger{width:44px;height:44px;border:0;background:transparent;cursor:pointer;display:grid;place-content:center;gap:6px;padding:0}
+.burger span{display:block;width:22px;height:2px;background:var(--ink)}
+.burger span:nth-child(2){width:14px}
+nav ul{display:flex;gap:32px;list-style:none;margin:0;padding:0;font-size:15px;font-weight:600;color:var(--mute)}
+nav a{display:inline-block;padding:12px 0}
+nav a:hover{color:var(--ink)}
+.head-actions{display:flex;gap:8px}
+.head-actions .btn{min-height:44px;padding:0 18px;font-size:14px}
+
+/* 히어로: 왼쪽 문장, 오른쪽 자모 격자 */
+.hero-top{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr);gap:64px;align-items:end;padding-top:88px;padding-bottom:80px}
+.hero h1{font-size:clamp(44px,6.6vw,96px);line-height:1.08;font-weight:850;letter-spacing:-.055em}
+.hero h1 em{font-style:normal;color:var(--brand)}
+.hero-top p{margin:32px 0 40px;font-size:18px;color:var(--mute);max-width:30em}
+
+.jamo{--c:clamp(64px,8.6vw,120px);display:grid;grid-template-columns:repeat(2,auto);justify-content:end;gap:16px 24px}
+.syl{display:grid;grid-template-columns:repeat(2,var(--c));grid-template-rows:var(--c) var(--c)}
+.syl i{display:grid;place-items:center;font:700 calc(var(--c)*.56)/1 var(--sans);font-style:normal;border:var(--rule);margin:0 -1.5px -1.5px 0;background:var(--white);transition:background .5s,color .5s,border-color .5s}
+.syl i.jong{grid-column:1/-1}
+.syl i.on{background:var(--brand);color:var(--white);border-color:var(--ink)}
+.syl i.gap{background:transparent;border:1.5px dashed var(--red);color:var(--red);font-size:15px;font-weight:700}
+.word{grid-column:1/-1;display:flex;justify-content:space-between;align-items:baseline;border-top:var(--rule);padding-top:12px;font-size:15px;color:var(--mute)}
+.word b{font-size:28px;font-weight:850;letter-spacing:-.04em;color:var(--ink)}
+
+/* 예시 흐름: 넷이 한 줄로 이어지는 띠 */
+.flow{list-style:none;margin:0;padding:0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));border-top:var(--rule);border-bottom:var(--rule);background:var(--white)}
+.flow > li{padding:24px 24px 32px;border-left:1px solid var(--hair);display:flex;flex-direction:column;gap:12px;min-width:0}
+.flow > li:first-child{border-left:0}
+.flow h2{font-size:13px;font-weight:700;letter-spacing:0;color:var(--mute);display:flex;gap:8px}
+.flow h2 span{color:var(--brand)}
+.quote{margin:0;font-size:16px;line-height:1.55}
+.star{display:grid;grid-template-columns:24px 1fr;gap:6px 8px;font-size:14px;line-height:1.5}
+.star b{font-weight:800;color:var(--brand)}
+.star .gap{color:var(--red);font-weight:700;border-bottom:1.5px dashed var(--red);justify-self:start}
+.units{display:flex;flex-wrap:wrap;gap:6px}
+.units span{font-size:13px;font-weight:700;border:1px solid var(--ink);padding:4px 10px}
+.flow > li.matched{background:var(--brand);color:var(--white)}
+.flow > li.matched h2,.flow > li.matched h2 span{color:rgba(255,255,255,.7)}
+.flow .title{margin:0;font-size:20px;font-weight:800;line-height:1.35;letter-spacing:-.03em}
+.flow .hit{margin:0;font-size:14px;font-weight:600}
+
+/* 섹션 공통 */
+section.block{padding:128px 0}
+.sec-head{display:grid;grid-template-columns:minmax(0,1fr) auto;align-items:end;gap:24px 48px;margin-bottom:48px}
+.sec-head h2{font-size:clamp(32px,4.4vw,56px);line-height:1.12}
+.sec-head p{margin:16px 0 0;color:var(--mute);max-width:32em}
+
+/* 다섯 단계: 실제 순서이므로 번호를 쓴다 */
+.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));list-style:none;margin:0;padding:0;border-top:var(--rule)}
+.step{padding:24px 24px 0 0;display:flex;flex-direction:column;gap:12px}
+.step + .step{padding-left:24px;border-left:1px solid var(--hair)}
+.step-no{font:800 64px/1 var(--sans);letter-spacing:-.06em;color:var(--brand);font-variant-numeric:tabular-nums}
+.step h3{font-size:22px;line-height:1.25}
+.step p{margin:0;font-size:15px;line-height:1.65;color:var(--mute)}
+
+/* 공고 카드: 회사 첫 글자를 큰 활자로 */
+.jobs-sec{background:var(--white);border-top:var(--rule)}
+.filters{display:flex;flex-wrap:wrap;border:var(--rule)}
+.filters button{min-height:44px;font:600 14px var(--sans);padding:0 16px;border:0;border-left:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.filters button:first-child{border-left:0}
+.filters button:hover{background:var(--paper)}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--white)}
+.jobs{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,264px),1fr));gap:24px;list-style:none;margin:0;padding:0}
+.job{border:var(--rule);display:flex;flex-direction:column;background:var(--white);transition:border-color .15s}
+.job:hover{border-color:var(--brand)}
+.job-mark{position:relative;aspect-ratio:4/3;background:var(--paper);border-bottom:var(--rule);display:grid;place-items:center;overflow:hidden}
+.job-mark .big{font:850 clamp(120px,14vw,168px)/1 var(--sans);letter-spacing:-.06em;color:var(--ink)}
+.job:hover .job-mark .big{color:var(--brand)}
+.dday{position:absolute;top:12px;right:12px;font-size:13px;font-weight:800;background:var(--ink);color:var(--white);padding:4px 10px;font-variant-numeric:tabular-nums}
+.dday.soon{background:var(--red)}
+.job-body{padding:20px 20px 24px;display:flex;flex-direction:column;gap:6px;flex:1}
+.co{font-size:14px;font-weight:600;color:var(--mute)}
+.job .title{font-size:20px;font-weight:800;line-height:1.35;letter-spacing:-.03em}
+.meta{font-size:14px;color:var(--mute)}
+.fit{margin-top:auto;padding-top:16px}
+.fit-row{display:flex;justify-content:space-between;font-size:14px;font-weight:700}
+.bar{display:flex;gap:4px;margin:8px 0 12px}
+.bar i{width:20px;height:20px;border:1.5px solid var(--ink)}
+.bar i.on{background:var(--brand);border-color:var(--brand)}
+.why{margin:0;font-size:14px;line-height:1.6;display:grid;grid-template-columns:auto 1fr;gap:2px 10px}
+.why b{color:var(--brand)}
+.why b.need{color:var(--red)}
+.empty{grid-column:1/-1;padding:32px;border:1.5px dashed var(--red);font-weight:700}
+
+/* 마무리 */
+.cta{background:var(--brand);color:var(--white)}
+.cta .wrap{padding-top:128px;padding-bottom:128px;display:flex;justify-content:space-between;align-items:flex-end;gap:40px;flex-wrap:wrap}
+.cta h2{font-size:clamp(36px,5.6vw,80px);line-height:1.1;letter-spacing:-.05em}
+.cta .btn{background:var(--white);border-color:var(--white);color:var(--brand)}
+.cta .btn:hover{background:var(--ink);border-color:var(--ink);color:var(--white)}
+footer{background:var(--ink);color:#B9B9C2}
+footer .wrap{padding-top:32px;padding-bottom:32px;display:flex;justify-content:space-between;align-items:center;gap:24px;flex-wrap:wrap;font-size:14px}
+footer .logo{color:var(--white)}
+footer ul{display:flex;gap:24px;flex-wrap:wrap;list-style:none;margin:0;padding:0}
+footer a:hover{color:var(--white)}
+
+/* 메뉴·로그인 패널 */
+.scrim{position:fixed;inset:0;background:rgba(23,23,26,.5);z-index:29}
+.drawer{position:fixed;top:0;bottom:0;left:0;width:min(420px,100%);z-index:30;background:var(--paper);border-right:var(--rule);padding:40px;display:flex;flex-direction:column;gap:16px;overflow:auto;transform:translateX(-100%);transition:transform .3s cubic-bezier(.2,.8,.2,1),visibility .3s;visibility:hidden}
+.drawer.open{transform:none;visibility:visible}
+.drawer h2{font-size:30px;line-height:1.25;margin-top:8px}
+.drawer form{display:flex;flex-direction:column;gap:8px}
+.drawer label{font-size:14px;font-weight:700;margin-top:8px}
+.drawer input{min-height:52px;font:16px var(--sans);padding:12px 16px;border:var(--rule);background:var(--white);color:var(--ink)}
+.drawer input:focus-visible{outline-offset:0}
+.drawer form .btn{margin-top:16px}
+.close{position:absolute;top:16px;right:16px;width:44px;height:44px;border:var(--rule);background:var(--white);font-size:18px;cursor:pointer}
+.menu{display:flex;flex-direction:column;border-top:var(--rule);margin-top:8px}
+.menu a{font:800 28px/1.2 var(--sans);letter-spacing:-.04em;padding:20px 0;border-bottom:1px solid var(--hair)}
+.menu a:hover{color:var(--brand)}
+.drawer .note{margin-top:auto;font-size:14px;color:var(--mute)}
+.drawer .note a{color:var(--brand);font-weight:800}
+
+@media (max-width:1000px){
+  .hero-top{grid-template-columns:1fr;gap:56px;padding-top:64px}
+  .jamo{justify-content:start}
+  .flow{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .flow > li:nth-child(3){border-left:0}
+  .flow > li:nth-child(n+3){border-top:1px solid var(--hair)}
+  .steps{grid-template-columns:1fr 1fr;row-gap:40px}
+  .step,.step + .step{padding:24px 24px 0 0;border-left:0}
+  .sec-head{grid-template-columns:1fr}
+}
+@media (max-width:760px){
+  .wrap{padding:0 20px}
+  nav{display:none}
+  .head-actions .btn:first-child{display:none}
+  .hero-top{padding-top:48px;padding-bottom:56px}
+  .hero-top p{font-size:17px}
+  .flow{grid-template-columns:1fr}
+  .flow > li{border-left:0;border-top:1px solid var(--hair)}
+  .flow > li:first-child{border-top:0}
+  .steps{grid-template-columns:1fr}
+  section.block{padding:80px 0}
+  .cta .wrap{padding-top:80px;padding-bottom:80px}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}html{scroll-behavior:auto}}
+</style>
+</head>
+<body>
+
+<a class="sr-only" href="#main">본문 바로가기</a>
+
+<header>
+  <div class="wrap head">
+    <div class="head-left">
+      <button class="burger" type="button" aria-label="메뉴 열기" aria-controls="menu" data-open="menu"><span></span><span></span><span></span></button>
+      <a class="logo" href="#">ConnecJob</a>
+    </div>
+    <nav aria-label="주요 메뉴">
+      <ul>
+        <li><a href="#steps">이용 방법</a></li>
+        <li><a href="#jobs">추천 공고</a></li>
+      </ul>
+    </nav>
+    <div class="head-actions">
+      <button class="btn" type="button" data-open="login">로그인</button>
+      <a class="btn btn-primary" href="#start">비회원으로 시작</a>
+    </div>
+  </div>
+</header>
+
+<main id="main">
+
+  <section class="hero" aria-labelledby="hero-h">
+    <div class="wrap hero-top">
+      <div>
+        <h1 id="hero-h">적어 둔 경험이<br>지원할 <em>공고</em>가<br>됩니다</h1>
+        <p>프로젝트, 인턴, 동아리 경험을 적으면 STAR로 정리하고, 맞는 직무와 공고를 근거와 함께 보여 드려요.</p>
+        <a class="btn btn-primary btn-lg" href="#start" id="start">경험 적기</a>
+      </div>
+
+      <!-- 경험 → 공고: 자모를 다시 짜듯 경험을 다시 짠다. 빈 받침은 '보완할 칸' -->
+      <div class="jamo" aria-hidden="true">
+        <div class="syl"><i data-a="ㄱ" data-b="ㄱ">ㄱ</i><i data-a="ㅕ" data-b="ㅗ">ㅕ</i><i class="jong" data-a="ㅇ" data-b="ㅇ">ㅇ</i></div>
+        <div class="syl"><i data-a="ㅎ" data-b="ㄱ">ㅎ</i><i data-a="ㅓ" data-b="ㅗ">ㅓ</i><i class="jong" data-a="ㅁ" data-b="">ㅁ</i></div>
+        <div class="word"><span>내가 적은</span><b id="word">경험</b></div>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <ol class="flow" aria-label="경험이 공고가 되는 과정 예시">
+        <li>
+          <h2><span>1</span>내가 적은 경험</h2>
+          <p class="quote">"학회에서 공공데이터 20만 건을 파이썬으로 정리해 대시보드를 만들었어요."</p>
+        </li>
+        <li>
+          <h2><span>2</span>STAR로 정리</h2>
+          <div class="star">
+            <b>S</b><span>지역별 데이터가 흩어져 있음</span>
+            <b>T</b><span>비교 대시보드 제작</span>
+            <b>A</b><span>20만 건 정제, 시각화</span>
+            <b>R</b><span class="gap">결과가 비어 있어요</span>
+          </div>
+        </li>
+        <li>
+          <h2><span>3</span>연결된 NCS 능력단위</h2>
+          <div class="units"><span>빅데이터 수집</span><span>데이터 전처리</span><span>데이터 시각화</span></div>
+        </li>
+        <li class="matched">
+          <h2><span>4</span>추천 공고</h2>
+          <p class="title">노바랩스 데이터 분석 인턴</p>
+          <p class="hit">요구 역량 6개 중 5개 충족</p>
+        </li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block" id="steps" aria-labelledby="steps-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2 id="steps-h">경험 하나로 다섯 단계</h2>
+          <p>모든 추천에는 어느 경험에서 나왔는지가 함께 표시돼요.</p>
+        </div>
+      </div>
+      <ol class="steps">
+        <li class="step"><span class="step-no">1</span><h3>STAR 카드</h3><p>경험을 상황, 과제, 행동, 결과로 나누고 빈 칸은 질문으로 채워요.</p></li>
+        <li class="step"><span class="step-no">2</span><h3>직무 추천</h3><p>경험과 맞닿은 NCS 능력단위로 어울리는 직무를 골라요.</p></li>
+        <li class="step"><span class="step-no">3</span><h3>공고와 회사</h3><p>그 직무를 뽑는 공고를 기업 규모별로 보여 주고 회사 정보도 함께 보여요.</p></li>
+        <li class="step"><span class="step-no">4</span><h3>보완점</h3><p>공고가 원하는데 아직 없는 역량과 관련 자격증, 학습 키워드를 알려 줘요.</p></li>
+        <li class="step"><span class="step-no">5</span><h3>자소서</h3><p>문항마다 쓸 경험을 짝지어 주고, 쓴 글을 공고 기준으로 첨삭해요.</p></li>
+      </ol>
+    </div>
+  </section>
+
+  <section class="block jobs-sec" id="jobs" aria-labelledby="jobs-h">
+    <div class="wrap">
+      <div class="sec-head">
+        <div>
+          <h2 id="jobs-h">이런 공고가 추천돼요</h2>
+          <p>예시 경험 기준이에요. 내 경험을 적으면 내 공고로 바뀌어요.</p>
+        </div>
+        <div class="filters" role="group" aria-label="기업 규모">
+          <button type="button" aria-pressed="true" data-size="전체">전체</button>
+          <button type="button" aria-pressed="false" data-size="대기업">대기업</button>
+          <button type="button" aria-pressed="false" data-size="공공기관">공공기관</button>
+          <button type="button" aria-pressed="false" data-size="중견·중소">중견·중소</button>
+          <button type="button" aria-pressed="false" data-size="외국계">외국계</button>
+        </div>
+      </div>
+      <ul class="jobs" id="job-list" aria-live="polite"></ul>
+    </div>
+  </section>
+
+  <section class="cta" aria-labelledby="cta-h">
+    <div class="wrap">
+      <h2 id="cta-h">경험 하나만 적어 보세요.<br>맞는 공고부터 보여 드릴게요.</h2>
+      <a class="btn btn-lg" href="#start">경험 적기</a>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <span class="logo">ConnecJob</span>
+    <ul><li><a href="#">이용약관</a></li><li><a href="#">개인정보처리방침</a></li><li>2026 ConnecJob</li></ul>
+  </div>
+</footer>
+
+<div class="scrim" hidden data-close></div>
+<aside class="drawer" id="menu" role="dialog" aria-modal="true" aria-label="메뉴" aria-hidden="true">
+  <button class="close" type="button" aria-label="메뉴 닫기" data-close>✕</button>
+  <span class="logo">ConnecJob</span>
+  <nav class="menu" aria-label="전체 메뉴">
+    <a href="#steps" data-close>이용 방법</a>
+    <a href="#jobs" data-close>추천 공고</a>
+    <a href="#start" data-close>경험 적기</a>
+  </nav>
+  <button class="btn btn-lg" type="button" data-open="login">로그인</button>
+  <a class="btn btn-primary btn-lg" href="#start" data-close>비회원으로 시작</a>
+</aside>
+<aside class="drawer" id="login" role="dialog" aria-modal="true" aria-labelledby="login-h" aria-hidden="true">
+  <button class="close" type="button" aria-label="로그인 닫기" data-close>✕</button>
+  <span class="logo">ConnecJob</span>
+  <h2 id="login-h">로그인하고<br>저장한 경험 이어 보기</h2>
+  <form onsubmit="event.preventDefault()">
+    <label for="email">이메일</label>
+    <input id="email" type="email" autocomplete="email" required>
+    <label for="pw">비밀번호</label>
+    <input id="pw" type="password" autocomplete="current-password" required>
+    <button class="btn btn-primary btn-lg" type="submit">로그인</button>
+  </form>
+  <p class="note">계정이 없나요? <a href="#">회원가입</a></p>
+</aside>
+
+<script>
+// 예시 데이터: 실제 서비스에선 Django 뷰가 추천 결과를 넘겨준다
+const jobs = [
+  { co:'노바랩스', size:'중견·중소', title:'데이터 분석 인턴', loc:'서울 성수', type:'인턴', dday:'D-7', hit:5, req:6, why:'E03 공공데이터 정제와 시각화', need:'SQL' },
+  { co:'한빛에너지공사', size:'공공기관', title:'정보화 일반직 신입', loc:'대전', type:'신입', dday:'D-12', hit:4, req:5, why:'E01 Django 예약관리 웹서비스', need:'정보처리기사' },
+  { co:'그린웨이브', size:'대기업', title:'서비스 기획 신입', loc:'경기 판교', type:'신입', dday:'D-3', hit:4, req:6, why:'E05 사용자 인터뷰 20건', need:'데이터 기반 의사결정' },
+  { co:'모아데이터코리아', size:'외국계', title:'AI 데이터 큐레이터', loc:'원격', type:'계약직', dday:'D-20', hit:3, req:5, why:'E03 데이터 정제', need:'영어 문서 작성' }
+];
+const list = document.getElementById('job-list');
+function render(size){
+  const rows = jobs.filter(j => size === '전체' || j.size === size);
+  list.innerHTML = rows.length ? rows.map(j => `
+    <li class="job">
+      <div class="job-mark">
+        <span class="big" aria-hidden="true">${j.co[0]}</span>
+        <span class="dday${parseInt(j.dday.slice(2)) <= 5 ? ' soon' : ''}">${j.dday}</span>
+      </div>
+      <div class="job-body">
+        <span class="co">${j.co}, ${j.size}</span>
+        <span class="title">${j.title}</span>
+        <span class="meta">${j.loc}, ${j.type}</span>
+        <div class="fit">
+          <div class="fit-row"><span>요구 역량</span><span>${j.req}개 중 ${j.hit}개</span></div>
+          <div class="bar" aria-hidden="true">${Array.from({length:j.req}, (_, i) => `<i class="${i < j.hit ? 'on' : ''}"></i>`).join('')}</div>
+          <p class="why"><b>근거</b><span>${j.why}</span><b class="need">보완</b><span>${j.need}</span></p>
+        </div>
+      </div>
+    </li>`).join('') : '<li class="empty">이 규모의 추천 공고가 아직 없어요. 다른 규모를 골라 보세요.</li>';
+}
+document.querySelectorAll('.filters button').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.filters button').forEach(x => x.setAttribute('aria-pressed', x === b));
+  render(b.dataset.size);
+}));
+render('전체');
+
+// 히어로의 유일한 움직임: 경험 ↔ 공고. 바뀌는 자모만 남색, 사라진 받침은 '보완' 칸이 된다
+const cells = document.querySelectorAll('.syl i'), word = document.getElementById('word'), label = word.previousElementSibling;
+function swap(toB){
+  cells.forEach(c => {
+    const v = toB ? c.dataset.b : c.dataset.a;
+    c.textContent = v || '보완';
+    c.classList.toggle('on', toB && v && c.dataset.a !== c.dataset.b);
+    c.classList.toggle('gap', toB && !v);
+  });
+  word.textContent = toB ? '공고' : '경험';
+  label.textContent = toB ? '지원할' : '내가 적은';
+}
+if (!matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  let b = false;
+  setInterval(() => { if (!document.hidden) swap(b = !b); }, 2600);
+}
+
+// 메뉴·로그인 패널 공용: 한 번에 하나만 열고, 닫으면 처음 누른 버튼으로 포커스를 돌려준다
+const scrim = document.querySelector('.scrim');
+let current = null, opener = null;
+function hide(d){ d.classList.remove('open'); d.setAttribute('aria-hidden', 'true'); }
+function openDrawer(id){
+  if (!opener) opener = document.activeElement;
+  if (current) hide(current);
+  current = document.getElementById(id);
+  current.classList.add('open'); current.setAttribute('aria-hidden', 'false'); scrim.hidden = false;
+  current.querySelector('input, nav a').focus();
+}
+function closeDrawer(){
+  if (!current) return;
+  hide(current); current = null; scrim.hidden = true;
+  if (opener) opener.focus({ preventScroll: true });
+  opener = null;
+}
+document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openDrawer(b.dataset.open)));
+document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', closeDrawer));
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+</script>
+</body>
+</html>
