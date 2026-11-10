@@ -22,6 +22,12 @@
   - LLM 재판정 (recommend(use_llm=True)) : 점수 상위 20개를 gpt-4o-mini 가 적합/부적합 + 이유로 판정, 적합만 최대 10개
     실제 공고 적합률 72% → 94% (125건 중 117건), 대신 경험당 평균 6.3개만 나옴 (맞는 공고가 적으면 적게)
     첫 프롬프트는 기술 스택·업종이 다르면 떨어뜨려 E01 이 2개만 나옴 → '직무 종류가 같으면 적합' 기준을 명시
+  - 신입 필터 (newbie_only=True) 전후 (평가셋 신입 경험 17개, 2026.11.06)
+    필터 전 상위 10개 중 66% 가 지원 불가(경력) 공고 → 필터 후 지원 가능 정답 재현율@10 0.72 → 0.91
+  - 청킹 안 함 (공고 1건 = Document 1개) : 임베딩 글 중앙값 659자·75% 1,143자 이하로 짧고 모델 한도(8천 토큰)도 안 넘음,
+    추천 결과 단위가 공고라 청크로 나누면 같은 공고가 여러 번 잡혀 다시 합쳐야 함 → 대신 embed_text 섹션 필터로 잡음 제거
+    2,500자 넘는 공고 14건은 LLM 에 넣을 때 excerpt() 로 업무 섹션마다 나눠 담아 뒤쪽 자격요건·우대사항이 안 잘리게 함
+  - 기업규모 필터 (sizes) : 평가셋은 기업규모가 없고, 실제 공고(521건)도 대기업집단 2·외국계 1건이라 전후 비교는 못 함
 """
 import re
 import sys
@@ -82,6 +88,21 @@ def embed_text(content):
     text = "\n".join(keep)
     # 업무 섹션 제목을 못 찾아 대부분 잘렸으면 섹션 건너뛰기 없이 (회사소개가 맨 앞이고 업무 제목이 없는 공고)
     return text if len(text) >= 100 else "\n".join(lines)
+
+
+def excerpt(text, limit):
+    """긴 공고를 LLM 에 넣을 때 앞에서 자르면 뒤쪽 자격요건·우대사항이 빠짐 → 업무 섹션마다 같은 길이씩 나눠 담음"""
+    if len(text) <= limit:
+        return text
+    parts, cur = [], []
+    for line in text.split("\n"):
+        if len(line) < 30 and JOB_HEAD.search(line) and cur:
+            parts.append("\n".join(cur))
+            cur = []
+        cur.append(line)
+    parts.append("\n".join(cur))
+    share = limit // len(parts)
+    return "\n".join(p[:share] for p in parts)
 
 
 def to_documents(df):
@@ -152,24 +173,27 @@ JUDGE_PROMPT = PromptTemplate(
 
 def judge(text, recs, contents):
     """LLM 재판정 (07_LLM ch2 with_structured_output) → 번호별 (적합, 이유)"""
-    jobs = "\n\n".join(f"[{i}] {r['title']}\n{c[:JUDGE_CHARS]}" for i, (r, c) in enumerate(zip(recs, contents)))
+    jobs = "\n\n".join(f"[{i}] {r['title']}\n{excerpt(c, JUDGE_CHARS)}" for i, (r, c) in enumerate(zip(recs, contents)))
     llm = ChatOpenAI(model=LLM_MODEL, temperature=0).with_structured_output(Verdicts)
     res = llm.invoke(JUDGE_PROMPT.invoke({"experience": text, "jobs": jobs}))
     return {v.번호: (v.적합, v.이유) for v in res.판정}
 
 
-def recommend(exps, db, k=10, rerank=True, today=None, use_llm=False):
+def recommend(exps, db, k=10, rerank=True, today=None, use_llm=False, sizes=None, newbie_only=False):
     """경험 리스트 → 추천 [{doc_id, title, 기업명, 점수, 유사도, 겹치는기술, 부족기술, ...}] (점수순 k개)
-    use_llm : 점수 상위 LLM_CANDIDATES 개를 LLM 이 판정해 적합한 것만 (k 개보다 적을 수 있음, '이유' 열 추가)"""
+    use_llm : 점수 상위 LLM_CANDIDATES 개를 LLM 이 판정해 적합한 것만 (k 개보다 적을 수 있음, '이유' 열 추가)
+    sizes : 기업규모 필터 (예: ['대기업집단', '중견(근사)']) - 검색 단계에서 거름 (후보 50개가 그 규모 안에서 나옴)
+    newbie_only : 신입 지원자에게 '경력' 공고는 뺌 (경력요구 표시 대신 필터)"""
     text = experience_text(exps)
     my_tags = set(find_tags(text, TECH))
     my_groups = set(categorize_job(text))
     newbie = not any(e["유형"] == "경력" for e in exps)
     today = today or date.today().isoformat()
+    where = {"기업규모": {"$in": list(sizes)}} if sizes else None
     out = []
-    for doc, sim in db.similarity_search_with_relevance_scores(text, k=CANDIDATES):
+    for doc, sim in db.similarity_search_with_relevance_scores(text, k=CANDIDATES, filter=where):
         total, have, lack = score(sim, doc.metadata, my_tags, my_groups, today)
-        if total is None:
+        if total is None or (newbie_only and newbie and doc.metadata["경력"] == "경력"):
             continue
         if len(doc.page_content) < 100:  # 본문이 이미지라 제목만 남은 공고 : 어느 경험과도 중간 유사도가 나와 상위에 끼어듦
             total -= SHORT_PENALTY
@@ -193,6 +217,9 @@ def _selftest():
     body = "제목: 백엔드 개발자\n직무: 웹개발자\n본문: 우리 회사에 대해\n[담당업무]\n" + "Django API 개발 " * 8 + "\n근무조건\n주 5일\n[우대사항]\nAWS"
     assert embed_text(body) == "제목: 백엔드 개발자\n[담당업무]\n" + "Django API 개발 " * 8 + "\n[우대사항]\nAWS"
     assert embed_text("회사소개\n우리는 좋은 회사") == "회사소개\n우리는 좋은 회사"  # 다 잘리면 원문 유지
+    long = "제목\n[담당업무]\n" + "가" * 500 + "\n[자격요건]\n" + "나" * 500
+    assert "[자격요건]" in excerpt(long, 300) and len(excerpt(long, 300)) <= 302  # 앞에서 자르면 자격요건이 빠짐
+    assert excerpt("짧은 공고", 300) == "짧은 공고"
 
 
 def evaluate():
@@ -206,12 +233,21 @@ def evaluate():
                          "직무묶음": text.map(lambda t: ";".join(categorize_job(t)) or "범위밖"), "page_content": text})
     db = build(jobs, "eval_jobs")
     answers = dict(zip(a["exp_id"], a["relevant_job_ids"].str.split(";")))
+    career = set(j.loc[j["경력"] == "경력", "job_id"])
     rows, review = [], []
     for exp in e.to_dict("records"):
         want = set(answers[exp["exp_id"]])
         res = {m: recommend([exp], db, k=10, rerank=m == "재순위") for m in ["유사도만", "재순위"]}
+        # 신입 필터 : 정답도 지원 가능한(경력 아닌) 공고로 줄여서 비교 / 지원 불가 공고 비율 = 상위 10개 중 경력 공고
+        newbie = exp["유형"] != "경력"
+        fil = recommend([exp], db, k=10, newbie_only=True)
+        ok = want - career if newbie else want
         rows.append({"exp_id": exp["exp_id"], "제목": exp["제목"], "정답수": len(want),
-                     **{m: len(want & {r["doc_id"] for r in res[m]}) / min(len(want), 10) for m in res}})
+                     **{m: len(want & {r["doc_id"] for r in res[m]}) / min(len(want), 10) for m in res},
+                     "필터전_지원불가": sum(r["doc_id"] in career for r in res["재순위"]) / 10 if newbie else None,
+                     "신입필터_재현율": len(ok & {r["doc_id"] for r in fil}) / min(len(ok), 10) if newbie and ok else None,
+                     "필터전_재현율(지원가능정답)": len(ok & {r["doc_id"] for r in res["재순위"]}) / min(len(ok), 10)
+                     if newbie and ok else None})
         if exp["exp_id"] in ("E01", "E05", "E06", "E07", "E17"):
             review += [{"exp_id": exp["exp_id"], "경험": exp["제목"], "순위": i, "job_id": r["doc_id"], "공고제목": r["title"],
                         "점수": r["점수"], "겹치는기술": r["겹치는기술"], "부족기술": r["부족기술"], "경력요구": r["경력요구"],
@@ -220,6 +256,8 @@ def evaluate():
     r = pd.DataFrame(rows)
     print(r.round(2).to_string(index=False))
     print(f"평균 재현율@10 : 유사도만 {r['유사도만'].mean():.2f} / 재순위 {r['재순위'].mean():.2f}")
+    print(f"신입 경험 {r['필터전_지원불가'].notna().sum()}개 - 필터 전 상위 10개 중 경력 공고 {r['필터전_지원불가'].mean():.0%}"
+          f" | 지원 가능 정답 재현율@10 : 필터 전 {r['필터전_재현율(지원가능정답)'].mean():.2f} → 신입 필터 {r['신입필터_재현율'].mean():.2f}")
     pd.DataFrame(review).to_csv(DATA_DIR / "eval_top5_review.csv", index=False, encoding="utf-8-sig")
     print("검토 파일 → data/eval_top5_review.csv (25행)")
 

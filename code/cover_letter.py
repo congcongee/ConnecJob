@@ -22,7 +22,8 @@ from langchain_core.prompts import PromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field
 
-from recommend import DATA_DIR, get_db, recommend
+from recommend import DATA_DIR, excerpt, get_db, recommend
+from tag_skills import TECH, find_tags
 
 QUESTIONS_PATH = DATA_DIR / "processed" / "cover_letter_questions.csv"
 DEFAULT_LIMIT = 800  # 하이잡 문항 글자수 중앙값
@@ -110,6 +111,12 @@ def experience_block(exps):
                      for e in exps)
 
 
+def find_unsupported(experience, text):
+    """검수 LLM : 경험 원문에 없는데 한 일처럼 쓴 표현 (초안·사용자 자소서 공통)"""
+    checker = ChatOpenAI(model=LETTER_MODEL, temperature=0).with_structured_output(Checked)
+    return checker.invoke(CHECK_PROMPT.invoke({"experience": experience, "draft": text})).근거없는표현
+
+
 def text_length(draft):
     return len(EXP_ID.sub("", draft).replace("[공고]", "").strip())
 
@@ -120,11 +127,9 @@ def write_draft(exps, rec, question, limit=DEFAULT_LIMIT, db=None):
     posting = db.get(ids=[rec["doc_id"]])["documents"][0]  # 임베딩한 글 (회사소개·양식 문구를 뺀 업무 중심 본문)
     llm = ChatOpenAI(model=LETTER_MODEL, temperature=0.3).with_structured_output(Draft)
     args = {"limit": limit, "question": question, "company": rec["기업명"], "title": rec["title"],
-            "posting": posting[:2500], "experience": experience_block(exps)}
-    checker = ChatOpenAI(model=LETTER_MODEL, temperature=0).with_structured_output(Checked)
-
+            "posting": excerpt(posting, 2500), "experience": experience_block(exps)}
     def check(text):
-        return checker.invoke(CHECK_PROMPT.invoke({"experience": args["experience"], "draft": text})).근거없는표현
+        return find_unsupported(args["experience"], text)
 
     draft = llm.invoke(DRAFT_PROMPT.invoke(args))
     flags, fixed = check(draft.초안), []
@@ -145,7 +150,72 @@ def write_draft(exps, rec, question, limit=DEFAULT_LIMIT, db=None):
             "글자수": text_length(draft.초안), "제한": limit, "사용경험": used}
 
 
+class Fix(BaseModel):
+    원문: str = Field(description="고칠 문장 (사용자 자소서 원문 그대로 인용)")
+    수정안: str = Field(description="고친 문장")
+    이유: str = Field(description="왜 고치는지 한 문장 (공고 요구 역량 반영, 구체성, 근거 없는 표현 등)")
+
+
+class Review(BaseModel):
+    총평: str = Field(description="공고 요구 역량이 얼마나 드러나는지 2~3문장")
+    수정제안: list[Fix] = Field(description="고칠 문장 최대 5개, 중요한 순")
+
+
+REVIEW_PROMPT = PromptTemplate(
+    template="""너는 신입·주니어 자기소개서 첨삭 컨설턴트다. [사용자 자소서]를 [채용공고]와 [문항]에 맞게 첨삭해라.
+규칙
+1. 수정안에는 [지원자 경험]에 있는 사실만 써라. 경험에 없는 경험·수치·협업을 새로 넣지 마라.
+2. 공고 담당업무·자격요건과 이어지는데 자소서에서 빠졌거나 흐릿한 경험을 드러내도록 고쳐라.
+3. 사용자 문체는 유지하고, 고칠 필요 없는 문장은 고르지 마라.
+{hint}
+[문항] {question} ({limit}자 이내)
+
+[채용공고] {company} - {title}
+{posting}
+
+[지원자 경험]
+{experience}
+
+[사용자 자소서]
+{letter}""",
+    input_variables=["hint", "question", "limit", "company", "title", "posting", "experience", "letter"],
+)
+
+
+def letter_skills(rec, letter):
+    """공고와 겹치는 내 기술(rec 겹치는기술) 중 자소서에 쓴 것 / 안 쓴 것"""
+    have = [t for t in rec["겹치는기술"].split(";") if t]
+    used = set(find_tags(letter, TECH))
+    return [t for t in have if t in used], [t for t in have if t not in used]
+
+
+def review_letter(exps, rec, question, letter, limit=DEFAULT_LIMIT, db=None):
+    """사용자가 쓴 자소서 첨삭 → {총평, 수정제안, 반영기술, 빠진기술, 근거없는표현, 글자수, 제한}"""
+    db = db or get_db("postings")
+    posting = db.get(ids=[rec["doc_id"]])["documents"][0]
+    used, missing = letter_skills(rec, letter)
+    experience = experience_block(exps)
+    # 첫 시험(E01)에서 사용자가 쓴 '팀원 10명과 협업' 을 수정안이 그대로 살림 → 검수 결과를 먼저 알려 주고 빼게 함
+    flags = find_unsupported(experience, letter)
+    hint = f"4. 경험에도 공고에도 있는데 자소서에 안 쓴 기술 : {', '.join(missing)} → 넣을 수 있으면 넣어라.\n" if missing else ""
+    if flags:
+        hint += f"5. 다음 표현은 경험 원문에 없다. 이 문장은 반드시 고르고, 수정안에서 그 내용을 빼라 : {' / '.join(flags)}\n"
+    llm = ChatOpenAI(model=LETTER_MODEL, temperature=0).with_structured_output(Review)
+    res = llm.invoke(REVIEW_PROMPT.invoke({"hint": hint, "question": question, "limit": limit, "company": rec["기업명"],
+                                           "title": rec["title"], "posting": excerpt(posting, 2500), "experience": experience,
+                                           "letter": letter}))
+    fixes = [f.model_dump() for f in res.수정제안]
+    # 수정안도 한 번 대조 : 그래도 남은 근거 없는 표현은 '확인필요' 로 화면에 표시
+    left = find_unsupported(experience, "\n".join(f["수정안"] for f in fixes)) if fixes else []
+    for f in fixes:
+        f["확인필요"] = [x for x in left if x in f["수정안"]]
+    return {"총평": res.총평, "수정제안": fixes, "반영기술": used, "빠진기술": missing,
+            "근거없는표현": flags, "글자수": len(letter.strip()), "제한": limit}
+
+
 def _selftest():
+    assert letter_skills({"겹치는기술": "Django;Docker"}, "Django 로 예약 서비스를 만들었습니다") == (["Django"], ["Docker"])
+    assert letter_skills({"겹치는기술": ""}, "아무 글") == ([], [])
     assert text_length("요약입니다.[E01] 지원합니다.[공고]") == len("요약입니다. 지원합니다.")
     assert norm_company("(주)이노션") == norm_company("이노션 ") == "이노션"
     assert len(get_questions("세상에없는회사123")) == len(DEFAULT_QUESTIONS)
@@ -156,11 +226,20 @@ def _selftest():
 if __name__ == "__main__":
     _selftest()
     e = pd.read_csv(DATA_DIR / "eval_exps.csv", dtype=str).set_index("exp_id", drop=False)
-    exps = [e.loc[x].to_dict() for x in (sys.argv[1:] or ["E01"])]
+    exps = [e.loc[x].to_dict() for x in ([a for a in sys.argv[1:] if not a.startswith("--")] or ["E01"])]
     db = get_db("postings")
     rec = recommend(exps, db, k=1, use_llm=True)[0]
     q = get_questions(rec["기업명"])[0]
     print(f"공고 : {rec['기업명']} - {rec['title']}\n추천 이유 : {rec['이유']}\n문항({q['문항유형']}, {q['글자수']}자) : {q['문항']}\n")
+    if "--review" in sys.argv:  # python cover_letter.py E01 --review → 일부러 근거 없는 문장을 넣은 예시 자소서 첨삭
+        letter = (f"저는 {exps[0]['제목']} 경험이 있습니다. {exps[0]['내용']}. "
+                  "팀원 10명과 협업하며 대용량 트래픽을 처리했고, 이 경험을 살려 귀사에 기여하고 싶습니다.")
+        out = review_letter(exps, rec, q["문항"], letter, q["글자수"], db)
+        print(f"[예시 자소서]\n{letter}\n\n총평 : {out['총평']}\n반영 기술 {out['반영기술']} | 빠진 기술 {out['빠진기술']}")
+        for f in out["수정제안"]:
+            print(f"- {f['원문']}\n  → {f['수정안']}\n  ({f['이유']})")
+        print("근거 없는 표현 :", out["근거없는표현"])
+        sys.exit()
     out = write_draft(exps, rec, q["문항"], q["글자수"], db)
     print(out["초안"], f"\n\n글자수 {out['글자수']}/{out['제한']} | 사용 경험 {out['사용경험']}\n보완할 점 : {out['보완할점']}")
     print("검수에서 고친 표현 :", out["고친표현"])
