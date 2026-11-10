@@ -23,7 +23,7 @@
     실제 공고 적합률 72% → 94% (125건 중 117건), 대신 경험당 평균 6.3개만 나옴 (맞는 공고가 적으면 적게)
     첫 프롬프트는 기술 스택·업종이 다르면 떨어뜨려 E01 이 2개만 나옴 → '직무 종류가 같으면 적합' 기준을 명시
   - 신입 필터 (newbie_only=True) 전후 (평가셋 신입 경험 17개, 2026.11.06)
-    필터 전 상위 10개 중 66% 가 지원 불가(경력) 공고 → 필터 후 지원 가능 정답 재현율@10 0.72 → 0.91
+    필터 전 상위 10개 중 66% 가 지원 불가(경력) 공고 → 필터 후 지원 가능 정답 재현율@10 0.72 → 0.89 (검색 단계 필터, 뒤에서 거를 때 0.91)
   - 청킹 안 함 (공고 1건 = Document 1개) : 임베딩 글 중앙값 659자·75% 1,143자 이하로 짧고 모델 한도(8천 토큰)도 안 넘음,
     추천 결과 단위가 공고라 청크로 나누면 같은 공고가 여러 번 잡혀 다시 합쳐야 함 → 대신 embed_text 섹션 필터로 잡음 제거
     2,500자 넘는 공고 14건은 LLM 에 넣을 때 excerpt() 로 업무 섹션마다 나눠 담아 뒤쪽 자격요건·우대사항이 안 잘리게 함
@@ -183,17 +183,21 @@ def recommend(exps, db, k=10, rerank=True, today=None, use_llm=False, sizes=None
     """경험 리스트 → 추천 [{doc_id, title, 기업명, 점수, 유사도, 겹치는기술, 부족기술, ...}] (점수순 k개)
     use_llm : 점수 상위 LLM_CANDIDATES 개를 LLM 이 판정해 적합한 것만 (k 개보다 적을 수 있음, '이유' 열 추가)
     sizes : 기업규모 필터 (예: ['대기업집단', '중견(근사)']) - 검색 단계에서 거름 (후보 50개가 그 규모 안에서 나옴)
-    newbie_only : 신입 지원자에게 '경력' 공고는 뺌 (경력요구 표시 대신 필터)"""
+    newbie_only : 신입 지원자에게 '경력' 공고는 뺌 - 이것도 검색 단계에서 거름
+                  (후보 50개를 뽑은 뒤 거르면 66% 가 경력 공고라 남는 게 적어 LLM 판정 후 1개만 나옴, 2026.11.10 웹 확인)"""
     text = experience_text(exps)
     my_tags = set(find_tags(text, TECH))
     my_groups = set(categorize_job(text))
     newbie = not any(e["유형"] == "경력" for e in exps)
     today = today or date.today().isoformat()
-    where = {"기업규모": {"$in": list(sizes)}} if sizes else None
+    conds = [{"기업규모": {"$in": list(sizes)}}] if sizes else []
+    if newbie_only and newbie:
+        conds.append({"경력": {"$ne": "경력"}})
+    where = {"$and": conds} if len(conds) > 1 else (conds[0] if conds else None)
     out = []
     for doc, sim in db.similarity_search_with_relevance_scores(text, k=CANDIDATES, filter=where):
         total, have, lack = score(sim, doc.metadata, my_tags, my_groups, today)
-        if total is None or (newbie_only and newbie and doc.metadata["경력"] == "경력"):
+        if total is None:
             continue
         if len(doc.page_content) < 100:  # 본문이 이미지라 제목만 남은 공고 : 어느 경험과도 중간 유사도가 나와 상위에 끼어듦
             total -= SHORT_PENALTY

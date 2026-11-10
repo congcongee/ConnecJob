@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}경험 입력{% endblock %}
+{% block content %}
+<h1 class="h3 mb-1">내 경험 입력</h1>
+<p class="text-secondary">프로젝트·경력·교육 경험을 적으면 맞는 공고, 추천 이유, 부족 역량을 알려 드려요. (최대 5개)</p>
+<form method="post" data-loading novalidate>
+  {% csrf_token %}
+  {{ formset.management_form }}
+  {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
+  <div id="exp-forms">
+  {% for f in formset %}
+    <fieldset class="card mb-3 exp-form"><div class="card-body row g-2">
+      <legend class="h6">경험 {{ forloop.counter }}</legend>
+      {% for field in f %}
+        <div class="{% if field.name == '내용' %}col-12{% else %}col-md-4{% endif %}">
+          <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          {{ field }}
+          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+          {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+        </div>
+      {% endfor %}
+    </div></fieldset>
+  {% endfor %}
+  </div>
+  <template id="empty-form"><fieldset class="card mb-3 exp-form"><div class="card-body row g-2">
+    <legend class="h6">경험 __num__</legend>
+    {% for field in formset.empty_form %}
+      <div class="{% if field.name == '내용' %}col-12{% else %}col-md-4{% endif %}">
+        <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+        {{ field }}
+        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+      </div>
+    {% endfor %}
+  </div></fieldset></template>
+  <button type="button" class="btn btn-outline-secondary btn-sm mb-4" id="add-exp">+ 경험 추가</button>
+
+  <div class="card mb-3"><div class="card-body">
+    <div class="form-check mb-2">{{ option.newbie_only }} <label class="form-check-label" for="{{ option.newbie_only.id_for_label }}">{{ option.newbie_only.label }}</label></div>
+    <div class="small mb-1">{{ option.sizes.label }}</div>
+    <div class="d-flex flex-wrap gap-3">{% for c in option.sizes %}<div class="form-check">{{ c.tag }} <label class="form-check-label" for="{{ c.id_for_label }}">{{ c.choice_label }}</label></div>{% endfor %}</div>
+  </div></div>
+  <button type="submit" class="btn btn-primary">공고 추천 받기</button>
+  <span class="ms-2 text-secondary small d-none" data-loading-msg>공고를 찾고 AI 가 적합 여부를 판정하는 중이에요 (30초 정도)</span>
+</form>
+
+{% if recent %}
+<h2 class="h6 mt-5">최근 결과</h2>
+<ul>{% for s in recent %}<li><a href="{% url 'matching:result' s.pk %}">{{ s }}</a> <span class="text-secondary small">{{ s.created|date:"m/d H:i" }}</span></li>{% endfor %}</ul>
+{% endif %}
+
+<script>
+  // 폼셋 추가 : empty_form 의 __prefix__ 를 번호로 바꾸고 TOTAL_FORMS 증가 (최대 5개)
+  document.getElementById("add-exp").addEventListener("click", () => {
+    const total = document.getElementById("id_exp-TOTAL_FORMS"), n = +total.value;
+    if (n >= +document.getElementById("id_exp-MAX_NUM_FORMS").value) return;
+    const html = document.getElementById("empty-form").innerHTML.replaceAll("__prefix__", n).replace("__num__", n + 1);
+    document.getElementById("exp-forms").insertAdjacentHTML("beforeend", html);
+    total.value = n + 1;
+  });
+</script>
+{% endblock %}

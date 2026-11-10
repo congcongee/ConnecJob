@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}지난 결과{% endblock %}
+{% block content %}
+<h1 class="h4">지난 결과</h1>
+<table class="table table-sm align-middle">
+  <thead><tr><th>날짜</th><th>경험</th><th>추천</th><th>자소서</th></tr></thead>
+  <tbody>
+  {% for s in searches %}
+    <tr><td class="small">{{ s.created|date:"Y-m-d H:i" }}</td><td><a href="{% url 'matching:result' s.pk %}">{{ s }}</a></td>
+        <td>{{ s.results|length }}개</td><td>{{ s.letters.all|length }}건</td></tr>
+  {% empty %}<tr><td colspan="4" class="text-secondary">아직 결과가 없어요.</td></tr>{% endfor %}
+  </tbody>
+</table>
+{% endblock %}

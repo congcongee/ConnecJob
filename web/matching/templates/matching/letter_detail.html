@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% block title %}자소서 {{ l.get_kind_display }}{% endblock %}
+{% block content %}
+<a class="small" href="{% url 'matching:result' l.search.pk %}">← 추천 결과로</a> ·
+<a class="small" href="{% url 'matching:letter' l.search.pk l.doc_id %}">다시 쓰기</a>
+<h1 class="h4 mt-2">{{ l.get_kind_display }} · {{ l.company }}</h1>
+<p class="small text-secondary">{{ l.title }}</p>
+<div class="card mb-3"><div class="card-body"><strong>문항</strong> {{ l.question }} ({{ l.limit }}자)</div></div>
+{% with r=l.result %}
+{% if l.kind == "draft" %}
+  <div class="card mb-3"><div class="card-body">
+    <div class="small text-secondary mb-2">{{ r.글자수 }}/{{ r.제한 }}자 · 근거 경험 {{ r.사용경험|join:", " }} (문단 끝 [E01] 표시)</div>
+    <div style="white-space: pre-wrap">{{ r.초안 }}</div>
+  </div></div>
+  <div class="alert alert-info"><strong>보완할 점</strong> {{ r.보완할점 }}</div>
+  {% if r.확인필요 %}<div class="alert alert-warning"><strong>확인 필요</strong> 경험에 없을 수 있는 표현이에요 : {{ r.확인필요|join:" / " }}</div>{% endif %}
+{% else %}
+  <div class="card mb-3"><div class="card-body">
+    <p><strong>총평</strong> {{ r.총평 }}</p>
+    <p class="small mb-1">글자수 {{ r.글자수 }}/{{ r.제한 }}자 · 반영한 공고 기술 {{ r.반영기술|join:", "|default:"-" }} · 빠진 기술 {{ r.빠진기술|join:", "|default:"-" }}</p>
+  </div></div>
+  {% if r.근거없는표현 %}<div class="alert alert-warning"><strong>경험 원문에 없는 표현</strong> {{ r.근거없는표현|join:" / " }}</div>{% endif %}
+  {% for f in r.수정제안 %}
+    <div class="card mb-2"><div class="card-body small">
+      <div class="text-decoration-line-through text-secondary">{{ f.원문 }}</div>
+      <div class="mt-1">→ {{ f.수정안 }}</div>
+      <div class="text-secondary mt-1">{{ f.이유 }}</div>
+      {% if f.확인필요 %}<div class="text-danger mt-1">확인 필요 : {{ f.확인필요|join:" / " }}</div>{% endif %}
+    </div></div>
+  {% endfor %}
+  <details class="mt-3"><summary class="small">내가 쓴 원문</summary><div class="small" style="white-space: pre-wrap">{{ l.user_text }}</div></details>
+{% endif %}
+{% endwith %}
+{% endblock %}

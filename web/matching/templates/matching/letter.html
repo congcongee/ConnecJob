@@ -1,0 +1,32 @@
+{% extends "base.html" %}
+{% block title %}자소서{% endblock %}
+{% block content %}
+<a class="small" href="{% url 'matching:result' s.pk %}">← 추천 결과로</a>
+<h1 class="h4 mt-2">{{ rec.기업명 }} · {{ rec.title }}</h1>
+<p class="small text-secondary">겹치는 기술 {{ rec.겹치는기술|default:"-" }} · 부족한 기술 {{ rec.부족기술|default:"-" }}</p>
+
+<div class="small mb-2">이 회사 문항 (누르면 입력칸에 들어가요)</div>
+<div class="d-flex flex-wrap gap-2 mb-3">
+  {% for q in questions %}<button type="button" class="btn btn-sm btn-outline-secondary q-pick" data-q="{{ q.문항 }}" data-limit="{{ q.글자수 }}">{{ q.문항유형 }} · {{ q.글자수 }}자</button>{% endfor %}
+</div>
+
+<form method="post" data-loading novalidate>
+  {% csrf_token %}
+  {% for field in form %}
+    <div class="mb-3">
+      <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+      {{ field }}
+      {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+    </div>
+  {% endfor %}
+  <button type="submit" name="kind" value="draft" class="btn btn-primary">내 경험으로 초안 만들기</button>
+  <button type="submit" name="kind" value="review" class="btn btn-outline-primary">내 자소서 첨삭 받기</button>
+  <span class="ms-2 text-secondary small d-none" data-loading-msg>AI 가 쓰고 경험 원문과 대조하는 중이에요 (30초 정도)</span>
+</form>
+<script>
+  document.querySelectorAll(".q-pick").forEach(b => b.addEventListener("click", () => {
+    document.getElementById("id_question").value = b.dataset.q;
+    document.getElementById("id_limit").value = b.dataset.limit;
+  }));
+</script>
+{% endblock %}
