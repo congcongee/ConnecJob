@@ -1,5 +1,6 @@
 .env
 .env.*
+!.env.example
 __pycache__/
 .ipynb_checkpoints/
 *.sqlite3

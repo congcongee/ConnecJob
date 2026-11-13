@@ -12,7 +12,9 @@
 - `ppt/` : 발표 자료 및 문서
 
 ## 🌐 웹 서비스 실행 (Django)
-conda `llm` 환경 (langchain·chroma·django 5.2), 키는 `data/.env` 의 `OPENAI_API_KEY`
+conda `llm` 환경 (langchain·chroma·django 5.2), 키는 `data/.env.example` 을 `data/.env` 로 복사해 `OPENAI_API_KEY` 입력
+
+Windows 에서는 `run_web.bat` 을 더블클릭하면 서버가 켜지고 브라우저가 열림
 ```bash
 cd web
 python manage.py migrate

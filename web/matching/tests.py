@@ -126,6 +126,19 @@ class FlowTest(TestCase):
     self.assertContains(res, "경험을 하나 이상 입력해 주세요.")
     self.assertFalse(Search.objects.exists())
 
+  @mock.patch("matching.views.study_plan", side_effect=api_error())
+  @mock.patch("matching.views.roadmap", return_value=dict(PLAN))
+  @mock.patch("matching.views.recommend", side_effect=[api_error(), [REC]])
+  def test_llm_error_falls_back_to_score(self, rec, *_):
+    """LLM 재판정·학습 계획이 실패해도 점수순 추천과 요구 비율표로 결과를 저장하고 안내"""
+    self.client.post(reverse("matching:index"), EXP)
+    res = self.client.post(reverse("matching:index"), {"run": ""}, follow=True)
+    self.assertEqual([c.kwargs["use_llm"] for c in rec.call_args_list], [True, False])
+    s = Search.objects.get()
+    self.assertEqual(s.get_roadmap()["학습계획"], [])
+    self.assertContains(res, "점수순 추천")
+    self.assertContains(res, "백엔드 개발자")
+
   @mock.patch("matching.views.recommend", side_effect=api_error())
   def test_ai_error_shows_message(self, *_):
     self.client.post(reverse("matching:index"), EXP)

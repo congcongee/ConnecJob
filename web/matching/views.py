@@ -19,6 +19,7 @@ from .models import Letter, Search
 SKIP_TAGS = set(VAGUE_TAGS) | {"정보없음", "Word", "PowerPoint", "MS Office", "한글"}
 
 AI_ERROR = "AI 호출 중 오류가 났습니다. 잠시 뒤 다시 시도해 주세요."
+FALLBACK_NOTE = "AI 판정이 잠시 안 돼서 점수순 추천과 요구 비율표로 먼저 보여 드려요. 다시 추천받으면 AI 판정이 붙어요."
 GUEST_KEY = "search_ids" # 비회원이 이 브라우저에서 만든 결과 id 목록 (세션)
 EXP_KEY = "exps"         # 추천받기 전에 담아 둔 경험 목록 (세션)
 HOME_EXP_KEY = "home_exp" # 홈에서 적은 경험 글 (맞춤 추천 '내용' 칸에 한 번 채움)
@@ -278,14 +279,19 @@ def index(request):
         exps = [dict(e, exp_id=f"E{i:02d}") for i, e in enumerate(exps, 1)]
         opt = option.cleaned_data
         try:
-          recs = recommend(exps, postings_db(), k=10, use_llm=True,
-                           sizes=opt["sizes"] or None, newbie_only=opt["newbie_only"])
-          plan = roadmap(exps, recs)
-          plan["학습계획"] = study_plan(exps, plan)
-        except openai.OpenAIError as e:
+          recs, judged = recommend_with_fallback(exps, opt)
+        except openai.OpenAIError as e: # 임베딩(검색)까지 실패 : 대신 보여 줄 것이 없음
           print("추천 AI 호출 실패 :", e)
           messages.error(request, AI_ERROR)
         else:
+          plan = roadmap(exps, recs) # 공고 표 통계라 AI 호출 없음
+          try:
+            plan["학습계획"] = study_plan(exps, plan)
+          except openai.OpenAIError as e:
+            print("학습 계획 AI 호출 실패 → 요구 비율표만 :", e)
+            plan["학습계획"] = []
+          if not judged or not plan["학습계획"]:
+            messages.warning(request, FALLBACK_NOTE)
           s = Search(experiences=json.dumps(exps, ensure_ascii=False),
                      newbie_only=opt["newbie_only"],
                      sizes=json.dumps(opt["sizes"], ensure_ascii=False),
@@ -299,6 +305,16 @@ def index(request):
           return redirect("matching:result", pk=s.id)
   context = {"form": form, "option": option, "exps": exps, "recent": owned(request)[:5]}
   return render(request, "matching/index.html", context)
+
+def recommend_with_fallback(exps, opt):
+  """추천 → (결과, LLM 판정 여부). LLM 재판정이 실패하면(한도·시간 초과 등) 판정 없이 점수순으로 대신
+  (팀 프로젝트의 'API 미제공 구는 등록 병상으로 대체' 방식 : 일부가 안 돼도 화면은 나오게)"""
+  kw = {"k": 10, "sizes": opt["sizes"] or None, "newbie_only": opt["newbie_only"]}
+  try:
+    return recommend(exps, postings_db(), use_llm=True, **kw), True
+  except openai.OpenAIError as e:
+    print("LLM 재판정 실패 → 점수순으로 대체 :", e)
+    return recommend(exps, postings_db(), use_llm=False, **kw), False
 
 def exp_delete(request, no:int):
   """담아 둔 경험 1개 빼기 (no : 1부터)"""
