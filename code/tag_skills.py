@@ -91,6 +91,7 @@ def _selftest():
     assert categorize_job("LLM 기반 챗봇 개발, PyTorch") == ["LLM·생성형AI 개발"]  # PyTorch(2점)만으론 ML 묶음 안 붙음
     assert categorize_job("일자리박람회 AI체험·AI취업지원·AI상담, 청소 업무") == []   # 흔한 말 AI 는 사전에 없음
     assert categorize_job("퍼포먼스 마케터 - 메타 광고 ROAS 관리") == ["퍼포먼스·그로스 마케팅"]
+    assert categorize_job("Django REST API 웹 개발")[0] == "웹·백엔드 개발"  # 직무묶음 이름은 웹·벡터DB 와 같은 15개 체계
 
 
 if __name__ == "__main__":

@@ -117,6 +117,7 @@ if __name__ == "__main__":
 
     str_cols = df.columns.drop("마감일")
     df[str_cols] = df[str_cols].fillna("정보없음")
+    df["시도"] = df["시도"].replace({"경기도": "경기"})  # 출처마다 '경기'·'경기도' 로 달라 한 표기로 (EDA 에서 발견)
     df = df.drop_duplicates(subset="doc_id")
     # 국비·부트캠프 교육생 모집글은 채용이 아니라 제외 (인크루트 고용형태 '교육생(연수생)', 8명 판정에서 1위 오탐 원인)
     trainee = df["page_content"].str.contains("교육생(연수생)", regex=False)

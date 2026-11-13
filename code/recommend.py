@@ -7,7 +7,7 @@
   python recommend.py eval    → 평가셋(eval_*.csv)으로 재현율@10 비교 + 대표 경험 5개 상위 5개 검토 파일
 
 점수 (후보 = 유사도 상위 CANDIDATES 개)
-  유사도 + 기술 충족률 × 0.1 + 직무묶음 일치 × 0.05   (평가셋 재현율@10 : 유사도만 0.74 → 0.79, 2026.11.06)
+  유사도 + 기술 충족률 × 0.1 + 직무묶음 일치 × 0.05   (평가셋 재현율@10 : 유사도만 0.75 → 0.78, 2026.11.13)
   - 기술 충족률 : 공고 기술태그 중 경험에 있는 비율 (공고에 태그가 없으면 0.5)
   - 마감일이 지난 공고는 제외
   - 경력 : 점수에 넣으면(-0.3) 유사도 폭(약 0~0.57)보다 커서 관련 공고가 묻힘 (재현율 0.48)
@@ -19,6 +19,8 @@
     실제 공고 상위 10개 적합률 52% → 59%, 상위 5개 65% → 69% (2026.11.06, 기존 판정 재사용 + 새 공고 60건 추가 판정)
   - 직무묶음 14개로 세분화 + 임베디드·제어·보안·QA 추가 (DB 329 → 521건) : 상위 10개 72%, 상위 5개 80%, 평가셋 재현율 0.74
     '같은 묶음만 추천' 필터는 평가셋 재현율 0.11 (정답이 다른 묶음에도 많음) 이라 안 씀
+  - 직무묶음을 웹 화면과 같은 15개 체계로 통일 (웹·백엔드·AI·ML·데이터 기반 마케팅 이름 변경 + AI·데이터 활용 개발 추가, DB 528건, 2026.11.13)
+    재현율@10 유사도만 0.75 → 재순위 0.78, 신입 필터 지원 가능 정답 재현율 0.72 → 0.92
   - LLM 재판정 (recommend(use_llm=True)) : 점수 상위 20개를 gpt-4o-mini 가 적합/부적합 + 이유로 판정, 적합만 최대 10개
     실제 공고 적합률 72% → 94% (125건 중 117건), 대신 경험당 평균 6.3개만 나옴 (맞는 공고가 적으면 적게)
     첫 프롬프트는 기술 스택·업종이 다르면 떨어뜨려 E01 이 2개만 나옴 → '직무 종류가 같으면 적합' 기준을 명시
@@ -124,7 +126,14 @@ def build(df, collection):
         db.delete(ids=list(gone))
     if len(new):  # 이미 저장된 공고는 다시 임베딩하지 않음 (비용)
         db.add_documents(to_documents(new))
-    print(f"[{collection}] 기존 {len(old)}건 - 삭제 {len(gone)}건 + 새로 저장 {len(new)}건")
+    # 본문은 같고 메타(직무묶음·기업규모 등)만 바뀐 공고는 임베딩 없이 메타만 고침 (사전 수정 후 DB 와 표가 어긋나지 않게)
+    kept = df[df["doc_id"].isin(old) & ~changed]
+    metas = dict(zip(got["ids"], got["metadatas"]))
+    fix = [(r["doc_id"], {c: str(r[c]) for c in META_COLS}) for _, r in kept.iterrows()
+           if metas[r["doc_id"]] != {c: str(r[c]) for c in META_COLS}]
+    if fix:  # shortcut: LangChain Chroma 에 메타만 고치는 공개 함수가 없어 내부 _collection 사용, 버전 올릴 때 확인
+        db._collection.update(ids=[i for i, _ in fix], metadatas=[m for _, m in fix])
+    print(f"[{collection}] 기존 {len(old)}건 - 삭제 {len(gone)}건 + 새로 저장 {len(new)}건, 메타만 수정 {len(fix)}건")
     return db
 
 
