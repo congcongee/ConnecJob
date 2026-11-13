@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.humanize",
     "matching",
+    "accounts",
 ]
 
 MIDDLEWARE = [
@@ -123,7 +124,12 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
+LOGIN_URL = "accounts:login"
+LOGIN_REDIRECT_URL = "matching:home"
+LOGOUT_REDIRECT_URL = "matching:home"
+
 STATIC_URL = "static/"
+STATICFILES_DIRS = [BASE_DIR / "connecjob" / "static"]  # 프로젝트 공통 CSS (앱 폴더가 아니라 자동으로 안 찾음)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

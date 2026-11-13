@@ -1,61 +1,84 @@
 {% extends "base.html" %}
 {% block title %}경험 입력{% endblock %}
+{% block stepper %}{% include "stepper.html" with step=1 %}{% endblock %}
 {% block content %}
-<h1 class="h3 mb-1">내 경험 입력</h1>
-<p class="text-secondary">프로젝트·경력·교육 경험을 적으면 맞는 공고, 추천 이유, 부족 역량을 알려 드려요. (최대 5개)</p>
-<form method="post" data-loading novalidate>
-  {% csrf_token %}
-  {{ formset.management_form }}
-  {% if formset.non_form_errors %}<div class="alert alert-danger">{{ formset.non_form_errors }}</div>{% endif %}
-  <div id="exp-forms">
-  {% for f in formset %}
-    <fieldset class="card mb-3 exp-form"><div class="card-body row g-2">
-      <legend class="h6">경험 {{ forloop.counter }}</legend>
-      {% for field in f %}
+<h1 class="mb-1">내 경험으로 맞는 공고 찾기</h1>
+<p class="text-secondary mb-4">경험을 하나씩 담고 [공고 추천 받기]를 누르세요. 최대 5개까지 담을 수 있어요.</p>
+<div class="row g-4">
+  <div class="col-lg-8">
+    <!-- 1. 경험 1개 입력 → [경험 추가] -->
+    <form method="post" class="card mb-4 form-box" novalidate>
+      {% csrf_token %}
+      <div class="card-header py-3">경험 {{ exps|length|add:1 }} 적기</div>
+      <div class="card-body row g-3">
+        {% for field in form %}
         <div class="{% if field.name == '내용' %}col-12{% else %}col-md-4{% endif %}">
-          <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
+          <label for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
           {{ field }}
-          {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
-          {% for e in field.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
+          {% if field.help_text %}<div class="help">{{ field.help_text }}</div>{% endif %}
+          {{ field.errors }}
         </div>
-      {% endfor %}
-    </div></fieldset>
-  {% endfor %}
-  </div>
-  <template id="empty-form"><fieldset class="card mb-3 exp-form"><div class="card-body row g-2">
-    <legend class="h6">경험 __num__</legend>
-    {% for field in formset.empty_form %}
-      <div class="{% if field.name == '내용' %}col-12{% else %}col-md-4{% endif %}">
-        <label class="form-label small" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} *{% endif %}</label>
-        {{ field }}
-        {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+        {% endfor %}
       </div>
-    {% endfor %}
-  </div></fieldset></template>
-  <button type="button" class="btn btn-outline-secondary btn-sm mb-4" id="add-exp">+ 경험 추가</button>
+      <div class="card-footer bg-white">
+        <button type="submit" name="add" class="btn btn-outline-primary">+ 경험 추가</button>
+      </div>
+    </form>
 
-  <div class="card mb-3"><div class="card-body">
-    <div class="form-check mb-2">{{ option.newbie_only }} <label class="form-check-label" for="{{ option.newbie_only.id_for_label }}">{{ option.newbie_only.label }}</label></div>
-    <div class="small mb-1">{{ option.sizes.label }}</div>
-    <div class="d-flex flex-wrap gap-3">{% for c in option.sizes %}<div class="form-check">{{ c.tag }} <label class="form-check-label" for="{{ c.id_for_label }}">{{ c.choice_label }}</label></div>{% endfor %}</div>
-  </div></div>
-  <button type="submit" class="btn btn-primary">공고 추천 받기</button>
-  <span class="ms-2 text-secondary small d-none" data-loading-msg>공고를 찾고 AI 가 적합 여부를 판정하는 중이에요 (30초 정도)</span>
-</form>
+    <!-- 2. 담은 경험 목록 -->
+    <div class="card mb-4">
+      <div class="card-header py-3">담은 경험 <span class="text-brand">{{ exps|length }}</span>개</div>
+      <ul class="list-group list-group-flush">
+        {% for e in exps %}
+        <li class="list-group-item d-flex justify-content-between align-items-start gap-3 py-3">
+          <div>
+            <span class="badge bg-soft text-brand">{{ e.유형 }}</span> <b>{{ e.제목 }}</b>
+            <div class="small text-secondary mt-1">{{ e.내용|truncatechars:80 }}</div>
+          </div>
+          <a class="btn btn-outline-secondary btn-sm text-nowrap" href="{% url 'matching:exp_delete' forloop.counter %}">빼기</a>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-secondary py-4 text-center">아직 담은 경험이 없어요. 위에 적고 [경험 추가]를 눌러 주세요.</li>
+        {% endfor %}
+      </ul>
+    </div>
 
-{% if recent %}
-<h2 class="h6 mt-5">최근 결과</h2>
-<ul>{% for s in recent %}<li><a href="{% url 'matching:result' s.pk %}">{{ s }}</a> <span class="text-secondary small">{{ s.created|date:"m/d H:i" }}</span></li>{% endfor %}</ul>
-{% endif %}
+    <!-- 3. 추천 조건 → [공고 추천 받기] -->
+    <form method="post" class="card form-box loading-form">
+      {% csrf_token %}
+      <div class="card-header py-3">추천 조건</div>
+      <div class="card-body check">
+        <label class="mb-2">{{ option.newbie_only }} {{ option.newbie_only.label }}</label>
+        <div class="small text-secondary mb-1">{{ option.sizes.label }}</div>
+        {{ option.sizes }}
+      </div>
+      <div class="card-footer bg-white">
+        <button type="submit" name="run" class="btn btn-primary btn-lg px-4">공고 추천 받기</button>
+        <span class="loading-msg ms-2 small text-secondary">공고를 찾고 AI 가 적합 여부를 판정하는 중이에요 (30초 정도)</span>
+      </div>
+    </form>
+  </div>
 
-<script>
-  // 폼셋 추가 : empty_form 의 __prefix__ 를 번호로 바꾸고 TOTAL_FORMS 증가 (최대 5개)
-  document.getElementById("add-exp").addEventListener("click", () => {
-    const total = document.getElementById("id_exp-TOTAL_FORMS"), n = +total.value;
-    if (n >= +document.getElementById("id_exp-MAX_NUM_FORMS").value) return;
-    const html = document.getElementById("empty-form").innerHTML.replaceAll("__prefix__", n).replace("__num__", n + 1);
-    document.getElementById("exp-forms").insertAdjacentHTML("beforeend", html);
-    total.value = n + 1;
-  });
-</script>
+  <div class="col-lg-4">
+    <div class="card mb-3">
+      <div class="card-header py-3">이렇게 쓰면 더 잘 맞아요</div>
+      <ul class="card-body small mb-0 ps-4">
+        <li class="mb-1">기술스택은 쉼표로 나눠 적어요 (Python, Django)</li>
+        <li class="mb-1">내용에 내가 맡은 일을 구체적으로 적을수록 정확해요</li>
+        <li>성과에 수치가 있으면 자소서에 그대로 쓰여요</li>
+      </ul>
+    </div>
+    <div class="rounded-3 mb-3 bg-gray p-3 small">
+      어떤 직무를 노려야 할지 모르겠다면 <a href="{% url 'matching:guide' %}">직무 알아보기</a>에서 먼저 살펴보세요.
+    </div>
+    {% if recent %}
+    <div class="card">
+      <div class="card-header py-3">최근 결과</div>
+      <div class="list-group list-group-flush">
+        {% for s in recent %}<a class="list-group-item list-group-item-action small" href="{% url 'matching:result' s.id %}">{{ s }} <span class="text-secondary ms-1">{{ s.created|date:"m/d H:i" }}</span></a>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
 {% endblock %}

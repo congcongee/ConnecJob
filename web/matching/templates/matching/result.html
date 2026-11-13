@@ -1,55 +1,107 @@
 {% extends "base.html" %}
 {% block title %}추천 결과{% endblock %}
+{% block stepper %}{% include "stepper.html" with step=2 %}{% endblock %}
 {% block content %}
-<h1 class="h3">추천 공고 {{ s.results|length }}개</h1>
-<p class="text-secondary small">경험 : {% for e in s.experiences %}[{{ e.exp_id }}] {{ e.제목 }}{% if not forloop.last %} · {% endif %}{% endfor %}
-  | 필터 : {% if s.newbie_only %}신입 가능만{% else %}경력 공고 포함{% endif %}{% if s.sizes %} · {{ s.sizes|join:", " }}{% endif %}</p>
+<h1 class="mb-1">내 경험에 맞는 공고</h1>
+<p class="text-secondary mb-3">{% for e in exps %}[{{ e.exp_id }}] {{ e.제목 }}{% if not forloop.last %} · {% endif %}{% endfor %}</p>
+
+{% if not user.is_authenticated %}
+<div class="alert bg-gray d-flex flex-wrap justify-content-between align-items-center gap-2">
+  <span><b>비회원으로 보고 있어요.</b> 이 결과는 이 브라우저에서만 볼 수 있어요. 로그인하면 계정에 저장돼요.</span>
+  <span>
+    <a class="btn btn-primary btn-sm" href="{% url 'accounts:login' %}?next={{ request.path }}">로그인</a>
+    <a class="btn btn-outline-primary btn-sm" href="{% url 'accounts:signup' %}?next={{ request.path }}">회원가입</a>
+  </span>
+</div>
+{% endif %}
 
 <div class="row g-4">
-<section class="col-lg-8">
-  {% for r in s.results %}
-  <article class="card mb-3"><div class="card-body">
-    <div class="d-flex justify-content-between align-items-start gap-2">
-      <div>
-        <div class="small text-secondary">{{ r.기업명 }} · {{ r.기업규모 }} · {{ r.시도 }}{% if r.마감일 and r.마감일 != "nan" %} · 마감 {{ r.마감일|slice:":10" }}{% endif %}</div>
-        <h2 class="h6 mb-1">{{ forloop.counter }}. {{ r.title }}</h2>
+  <!-- 추천 공고 -->
+  <div class="col-lg-8">
+    <div class="card">
+      <div class="card-header d-flex flex-wrap justify-content-between gap-2">
+        <span>추천 공고 <span class="text-brand">{{ results|length }}</span>건 <span class="fw-normal small text-secondary ms-1">AI 적합 판정 · 점수순</span></span>
+        <span class="fw-normal small">
+          <span class="badge rounded-pill bg-gray text-dark border">{% if s.newbie_only %}신입 지원 가능{% else %}경력 공고 포함{% endif %}</span>
+          {% for z in sizes %}<span class="badge rounded-pill bg-gray text-dark border">{{ z }}</span>{% empty %}<span class="badge rounded-pill bg-gray text-dark border">기업 규모 전체</span>{% endfor %}
+          <a href="{% url 'matching:index' %}">조건 바꾸기</a>
+        </span>
       </div>
-      <span class="badge text-bg-light border">점수 {{ r.점수 }}</span>
+      <ul class="list-group list-group-flush">
+        {% for r in results %}
+        <li class="list-group-item job-row py-3">
+          <div class="d-flex gap-3">
+            <div class="flex-grow-1">
+              <div class="small text-secondary">{{ r.기업명 }}
+                {% if r.기업규모 != "정보없음" %}<span class="badge bg-gray text-secondary border fw-normal">{{ r.기업규모 }}</span>{% endif %}
+                {% if forloop.first %}<span class="badge bg-brand">BEST</span>{% endif %}</div>
+              <div class="title"><a href="{% url 'matching:letter' s.id r.doc_id %}">{{ r.title }}</a></div>
+              <div class="cond mb-2">{% if r.place %}{{ r.place }} | {% endif %}{{ r.career }} | {{ r.deadline_txt }}{% if r.경력요구 %} | <b class="text-dark">경력 요구</b>{% endif %}</div>
+              {% if r.이유 %}<div class="bg-soft rounded-3 px-3 py-2 small mb-2"><b class="text-brand me-1">추천 이유</b>{{ r.이유 }}</div>{% endif %}
+              {% if r.have %}<div class="small"><span class="text-secondary me-1">보유</span>{% for t in r.have %}<span class="tag tag-have">{{ t }}</span>{% endfor %}</div>{% endif %}
+              {% if r.lack %}<div class="small"><span class="text-secondary me-1">부족</span>{% for t in r.lack %}<span class="tag tag-lack">{{ t }}</span>{% endfor %}</div>{% endif %}
+            </div>
+            <div class="text-center" style="width: 130px">
+              {% if r.dday %}<span class="dday {% if r.dday == 'D-Day' %}dday-today{% endif %}">{{ r.dday }}</span>{% endif %}
+              <div class="border rounded-3 bg-gray my-2 py-1"><div class="small text-secondary">기술 일치</div><b class="fs-5 text-brand">{{ r.ratio }}</b></div>
+              <a class="btn btn-primary btn-sm w-100 mb-1" href="{% url 'matching:letter' s.id r.doc_id %}">자소서 쓰기</a>
+              {% if r.url and r.url != "정보없음" %}<a class="btn btn-outline-secondary btn-sm w-100" href="{{ r.url }}" target="_blank">공고 원문</a>{% endif %}
+            </div>
+          </div>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-center text-secondary py-5">조건에 맞는 공고가 없어요. 필터를 풀거나 경험을 더 자세히 적어 보세요.
+          <div class="mt-3"><a class="btn btn-outline-secondary btn-sm" href="{% url 'matching:index' %}">다시 입력하기</a></div></li>
+        {% endfor %}
+      </ul>
     </div>
-    {% if r.경력요구 %}<span class="badge text-bg-warning">경력 요구 공고</span>{% endif %}
-    {% if r.이유 %}<p class="mb-2 mt-2"><strong>추천 이유</strong> {{ r.이유 }}</p>{% endif %}
-    <p class="small mb-1"><strong>겹치는 기술</strong> {{ r.겹치는기술|default:"-" }}</p>
-    <p class="small mb-2"><strong>부족한 기술</strong> {{ r.부족기술|default:"-" }}</p>
-    <a class="btn btn-sm btn-primary" href="{% url 'matching:letter' s.pk r.doc_id %}">자소서 초안·첨삭</a>
-    {% if r.url and r.url != "정보없음" %}<a class="btn btn-sm btn-outline-secondary" href="{{ r.url }}" target="_blank" rel="noopener">공고 원문</a>{% endif %}
-  </div></article>
-  {% empty %}
-  <div class="alert alert-secondary">조건에 맞는 공고가 없어요. 필터를 풀거나 경험을 더 자세히 적어 보세요.</div>
-  {% endfor %}
-</section>
+  </div>
 
-<aside class="col-lg-4">
-  <div class="card"><div class="card-body">
-    <h2 class="h6">부족 역량 · 준비 로드맵</h2>
-    <p class="small text-secondary">관심 직무 {{ s.roadmap.직무묶음|join:", "|default:"-" }} 공고 {{ s.roadmap.대상공고수 }}건 기준 요구 비율</p>
-    <ol class="small ps-3">
-      {% for d in s.roadmap.부족기술 %}<li><strong>{{ d.기술 }}</strong> {% widthratio d.요구비율 1 100 %}% ({{ d.공고수 }}건)</li>{% empty %}<li class="list-unstyled">부족한 기술이 없어요</li>{% endfor %}
-    </ol>
-    {% if s.roadmap.추천자격증 %}<p class="small mb-3"><strong>추천 자격증</strong> {% for c in s.roadmap.추천자격증 %}{{ c.자격증 }} ({% widthratio c.요구비율 1 100 %}%){% if not forloop.last %}, {% endif %}{% endfor %}</p>{% endif %}
-    {% for st in s.roadmap.학습계획 %}
-      <div class="border-top pt-2 mt-2 small">
-        <div class="fw-semibold">{{ forloop.counter }}. {{ st.기술 }}</div>
-        <div>{{ st.학습방법 }}</div>
-        <div class="text-secondary">미니 프로젝트 : {{ st.미니프로젝트 }}</div>
+  <!-- 부족 역량 · 로드맵 -->
+  <div class="col-lg-4">
+    <div class="card">
+      <div class="card-header py-3">부족 역량 · 준비 로드맵</div>
+      <div class="card-body">
+        <p class="small text-secondary">{{ plan.직무묶음|join:", "|default:"관심 직무" }} 공고 {{ plan.대상공고수 }}건 중 요구 비율</p>
+        {% if plan.부족기술 %}
+        <table class="table table-sm">
+          <thead><tr><th>순위</th><th>부족 기술</th><th class="text-end">요구 비율</th></tr></thead>
+          <tbody>
+            {% for d in plan.부족기술 %}
+            <tr>
+              <td>{{ forloop.counter }}</td>
+              <td><b>{{ d.기술 }}</b>
+                <div class="progress mt-1" style="height: 4px"><div class="progress-bar" style="width: {{ d.pct }}; background-color: #1F06AC"></div></div></td>
+              <td class="text-end fw-bold">{{ d.pct }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+        {% else %}<p class="small">부족한 기술이 없어요.</p>{% endif %}
+
+        {% if plan.추천자격증 %}
+        <div class="small text-secondary mb-1">추천 자격증</div>
+        <div class="mb-2">{% for c in plan.추천자격증 %}<span class="tag">{{ c.자격증 }} {{ c.pct }}</span>{% endfor %}</div>
+        {% endif %}
+
+        {% for st in plan.학습계획 %}
+        <div class="border-top pt-2 mt-2 small">
+          <b><span class="text-brand me-1">{{ forloop.counter }}</span>{{ st.기술 }}</b>
+          <p class="mb-1">{{ st.학습방법 }}</p>
+          <p class="mb-0 text-secondary">미니 프로젝트 · {{ st.미니프로젝트 }}</p>
+        </div>
+        {% endfor %}
       </div>
-    {% endfor %}
-  </div></div>
-  {% if s.letters.exists %}
-  <div class="card mt-3"><div class="card-body small">
-    <h2 class="h6">이 결과로 만든 자소서</h2>
-    <ul class="ps-3 mb-0">{% for l in s.letters.all %}<li><a href="{% url 'matching:letter_detail' l.pk %}">{{ l.get_kind_display }} · {{ l.company }}</a></li>{% endfor %}</ul>
-  </div></div>
-  {% endif %}
-</aside>
+    </div>
+
+    {% if letters %}
+    <div class="card mt-3">
+      <div class="card-header py-3">이 결과로 만든 자소서</div>
+      <div class="list-group list-group-flush">
+        {% for l in letters %}<a class="list-group-item list-group-item-action small" href="{% url 'matching:letter_detail' l.id %}"><span class="badge bg-soft text-brand me-1">{{ l.get_kind_display }}</span>{{ l.company }}</a>{% endfor %}
+      </div>
+    </div>
+    {% endif %}
+  </div>
 </div>
 {% endblock %}

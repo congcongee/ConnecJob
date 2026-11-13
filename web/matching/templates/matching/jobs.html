@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}공고 둘러보기{% endblock %}
+{% block content %}
+<h1 class="mb-1">공고 둘러보기</h1>
+<p class="text-secondary">모은 IT·데이터·마케팅 공고를 직접 찾아보세요. 내 경험에 맞는 공고만 보고 싶다면 <a href="{% url 'matching:index' %}">맞춤 추천</a>을 받아 보세요.</p>
+
+<form method="get" class="d-flex gap-2 mb-4">
+  <input name="q" value="{{ q }}" class="form-control form-control-lg" placeholder="직무, 회사, 기술로 검색 (예: Django, 데이터 분석)" aria-label="공고 검색">
+  <input type="hidden" name="group" value="{{ group }}">
+  <input type="hidden" name="size" value="{{ size }}">
+  {% if newbie %}<input type="hidden" name="newbie" value="1">{% endif %}
+  <button class="btn btn-primary px-4" type="submit">검색</button>
+</form>
+
+<div class="row g-4">
+  <!-- 왼쪽 필터 -->
+  <div class="col-lg-3">
+    <form method="get" class="card p-3 form-box">
+      <input type="hidden" name="q" value="{{ q }}">
+      <b class="mb-1">직무</b>
+      <label class="fw-normal"><input type="radio" name="group" value="" {% if not group %}checked{% endif %}> 전체</label>
+      {% for g in groups %}
+      <label class="fw-normal"><input type="radio" name="group" value="{{ g }}" {% if g == group %}checked{% endif %}> {{ g }}</label>
+      {% endfor %}
+      <a class="small mb-3" href="{% url 'matching:guide' %}">직무가 무슨 일인지 모르겠다면 →</a>
+      <b class="mb-1 pt-3 border-top">기업 규모</b>
+      <label class="fw-normal"><input type="radio" name="size" value="" {% if not size %}checked{% endif %}> 전체</label>
+      {% for z in sizes %}
+      <label class="fw-normal"><input type="radio" name="size" value="{{ z }}" {% if z == size %}checked{% endif %}> {{ z }}</label>
+      {% endfor %}
+      <b class="mb-1 pt-3 mt-2 border-top">경력</b>
+      <label class="fw-normal"><input type="checkbox" name="newbie" value="1" {% if newbie %}checked{% endif %}> 신입 지원 가능만</label>
+      <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-primary btn-sm w-75" type="submit">적용</button>
+        <a class="btn btn-outline-secondary btn-sm w-25" href="{% url 'matching:jobs' %}">초기화</a>
+      </div>
+    </form>
+  </div>
+
+  <!-- 오른쪽 공고 목록 -->
+  <div class="col-lg-9">
+    {% if group_desc %}<div class="alert bg-soft border-0"><b>{{ group }}</b> : {{ group_desc }} <a href="{% url 'matching:guide' %}">자세히</a></div>{% endif %}
+    <div class="card">
+      <div class="card-header d-flex flex-wrap justify-content-between gap-2">
+        <span>공고 <span class="text-brand">{{ count }}</span>건 <span class="fw-normal small text-secondary ms-1">마감 빠른 순</span></span>
+        <span class="fw-normal small">
+          {% if q %}<span class="badge rounded-pill bg-gray text-dark border">"{{ q }}"</span>{% endif %}
+          {% if group %}<span class="badge rounded-pill bg-gray text-dark border">{{ group }}</span>{% endif %}
+          {% if size %}<span class="badge rounded-pill bg-gray text-dark border">{{ size }}</span>{% endif %}
+          {% if newbie %}<span class="badge rounded-pill bg-gray text-dark border">신입 가능</span>{% endif %}
+        </span>
+      </div>
+      <ul class="list-group list-group-flush">
+        {% for p in rows %}
+        <li class="list-group-item job-row py-3">
+          <div class="d-flex gap-3">
+            <div class="flex-grow-1">
+              <div class="small text-secondary">{{ p.기업명 }}{% if p.기업규모 != "정보없음" %} <span class="badge bg-gray text-secondary border fw-normal">{{ p.기업규모 }}</span>{% endif %}</div>
+              <div class="title"><a href="{% url 'matching:job_detail' p.doc_id %}">{{ p.title }}</a></div>
+              <div class="cond mb-2">{% if p.place %}{{ p.place }} | {% endif %}{{ p.career }} | {{ p.deadline_txt }} | {{ p.source }}</div>
+              <div>{% for t in p.tag_list|slice:":8" %}<span class="tag">{{ t }}</span>{% endfor %}</div>
+            </div>
+            <div class="text-end" style="width: 120px">
+              {% if p.dday %}<span class="dday {% if p.dday == 'D-Day' %}dday-today{% endif %}">{{ p.dday }}</span>{% endif %}
+              <a class="btn btn-outline-primary btn-sm w-100 mt-2" href="{% url 'matching:job_detail' p.doc_id %}">상세 보기</a>
+            </div>
+          </div>
+        </li>
+        {% empty %}
+        <li class="list-group-item text-center text-secondary py-5">조건에 맞는 공고가 없어요. 검색어를 줄이거나 필터를 초기화해 보세요.</li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <!-- 페이지 이동 -->
+    {% if last > 1 %}
+    <div class="d-flex justify-content-center align-items-center gap-3 my-4">
+      {% if page > 1 %}<a class="btn btn-outline-secondary btn-sm" href="?q={{ q|urlencode }}&group={{ group|urlencode }}&size={{ size|urlencode }}{% if newbie %}&newbie=1{% endif %}&page={{ page|add:'-1' }}">이전</a>{% endif %}
+      <span>{{ page }} / {{ last }}</span>
+      {% if page < last %}<a class="btn btn-outline-secondary btn-sm" href="?q={{ q|urlencode }}&group={{ group|urlencode }}&size={{ size|urlencode }}{% if newbie %}&newbie=1{% endif %}&page={{ page|add:'1' }}">다음</a>{% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

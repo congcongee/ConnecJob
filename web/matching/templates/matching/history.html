@@ -1,14 +1,29 @@
 {% extends "base.html" %}
 {% block title %}지난 결과{% endblock %}
 {% block content %}
-<h1 class="h4">지난 결과</h1>
-<table class="table table-sm align-middle">
-  <thead><tr><th>날짜</th><th>경험</th><th>추천</th><th>자소서</th></tr></thead>
-  <tbody>
-  {% for s in searches %}
-    <tr><td class="small">{{ s.created|date:"Y-m-d H:i" }}</td><td><a href="{% url 'matching:result' s.pk %}">{{ s }}</a></td>
-        <td>{{ s.results|length }}개</td><td>{{ s.letters.all|length }}건</td></tr>
-  {% empty %}<tr><td colspan="4" class="text-secondary">아직 결과가 없어요.</td></tr>{% endfor %}
-  </tbody>
-</table>
+<h1 class="mb-3">지난 결과</h1>
+{% if searches %}
+<div class="card">
+  <table class="table align-middle mb-0">
+    <thead class="table-light">
+      <tr><th>날짜</th><th>경험</th><th>추천</th><th>자소서</th></tr>
+    </thead>
+    <tbody>
+      {% for s in searches %}
+      <tr onclick="location='{% url 'matching:result' s.id %}'" style="cursor: pointer">
+        <td class="small">{{ s.created|date:"Y-m-d H:i" }}</td>
+        <td><a href="{% url 'matching:result' s.id %}">{{ s }}</a></td>
+        <td>{{ s.get_results|length }}개</td>
+        <td>{{ s.letter_set.count }}건</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% else %}
+<div class="card bg-gray border-0 p-5 text-center text-secondary">
+  아직 결과가 없어요.
+  <div class="mt-3"><a class="btn btn-primary" href="{% url 'matching:index' %}">경험 입력하고 추천받기</a></div>
+</div>
+{% endif %}
 {% endblock %}

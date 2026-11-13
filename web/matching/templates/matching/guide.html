@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}직무 알아보기{% endblock %}
+{% block content %}
+<h1 class="mb-1">직무 알아보기</h1>
+<p class="text-secondary mb-4">개발 직무 이름만으로는 무슨 일을 하는지 알기 어려워요. 직무마다 하는 일과 어울리는 사람, 실제 공고에서 많이 요구하는 기술을 정리했어요.</p>
+
+<!-- 1. 나에게 맞는 직무 찾기 -->
+<div class="card mb-5" id="check">
+  <div class="card-header py-3">나에게 맞는 직무 찾기 <span class="fw-normal small text-secondary ms-1">해당하는 것을 모두 골라 보세요</span></div>
+  <div class="card-body">
+    <form method="get" action="#check" class="form-box">
+      <input type="hidden" name="check" value="1">
+      <div class="row">
+        {% for key, text, groups in questions %}
+        <div class="col-md-6">
+          <label class="fw-normal py-1"><input type="checkbox" name="like" value="{{ key }}" {% if key in likes %}checked{% endif %}> {{ text }}</label>
+        </div>
+        {% endfor %}
+      </div>
+      <button class="btn btn-primary mt-3" type="submit">맞는 직무 보기</button>
+    </form>
+
+    {% if asked %}
+    <hr>
+    {% if picks %}
+    <h2 class="h5 mb-3">이런 직무가 어울려요</h2>
+    <div class="row g-3">
+      {% for g in picks %}
+      <div class="col-md-4">
+        <div class="card h-100 {% if forloop.first %}border-primary{% endif %}">
+          <div class="card-body">
+            <div class="small text-brand fw-bold">{{ forloop.counter }}순위 · 고른 것 {{ g.score }}개와 맞아요</div>
+            <div class="fs-5 fw-bold">{{ g.name }}</div>
+            <p class="small text-secondary">{{ g.desc }}</p>
+            <ul class="small ps-3 mb-0">{% for r in g.reasons %}<li>{{ r }}</li>{% endfor %}</ul>
+          </div>
+          <div class="card-footer bg-white d-flex gap-2">
+            <a class="btn btn-outline-primary btn-sm w-50" href="#g{{ g.no }}">설명 보기</a>
+            <a class="btn btn-primary btn-sm w-50" href="{% url 'matching:jobs' %}?group={{ g.name|urlencode }}">공고 {{ g.count }}건</a>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+    <p class="small text-secondary mt-3 mb-0">고른 문장으로만 점수를 매긴 거라 참고만 하세요. 내가 한 경험으로 맞는 공고를 찾으려면 <a href="{% url 'matching:index' %}">맞춤 추천</a>을 받아 보세요.</p>
+    {% else %}
+    <p class="text-secondary mb-0">하나 이상 골라 주세요.</p>
+    {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<!-- 2. 직무별 설명 -->
+<h2 class="mb-3">직무별 설명</h2>
+<div class="row g-3">
+  {% for c in cards %}
+  <div class="col-lg-6" id="g{{ forloop.counter }}">
+    <div class="card h-100">
+      <div class="card-body">
+        <div class="d-flex justify-content-between align-items-start gap-2">
+          <h3 class="h5 mb-1">{{ c.name }}</h3>
+          <a class="small text-nowrap" href="{% url 'matching:jobs' %}?group={{ c.name|urlencode }}">공고 {{ c.count }}건 →</a>
+        </div>
+        <p class="text-brand fw-bold mb-2">{{ c.info.한줄 }}</p>
+        <p class="mb-2">{{ c.info.하는일 }}</p>
+        <p class="small mb-2"><b>이런 사람에게 맞아요</b> · {{ c.info.맞는사람 }}</p>
+        <p class="small mb-2"><b>대표 기술</b> · {{ c.info.기술 }}</p>
+        {% if c.top %}
+        <div class="small text-secondary mb-1">실제 공고에서 많이 요구하는 기술</div>
+        <div>{% for t in c.top %}<span class="tag">{{ t }}</span>{% endfor %}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

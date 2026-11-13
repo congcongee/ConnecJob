@@ -1,0 +1,7 @@
+{# step : 1 경험 입력 / 2 공고 추천 / 3 부족 역량 / 4 자소서 #}
+<div class="row g-2 mb-4 text-nowrap">
+  <div class="col-6 col-md-3"><div class="step {% if step == 1 %}step-on{% else %}step-done{% endif %}">01 경험 입력</div></div>
+  <div class="col-6 col-md-3"><div class="step {% if step == 2 %}step-on{% elif step > 2 %}step-done{% endif %}">02 공고 추천·근거</div></div>
+  <div class="col-6 col-md-3"><div class="step {% if step == 2 %}step-on{% elif step > 2 %}step-done{% endif %}">03 부족 역량·로드맵</div></div>
+  <div class="col-6 col-md-3"><div class="step {% if step == 4 %}step-on{% endif %}">04 자소서 초안·첨삭</div></div>
+</div>

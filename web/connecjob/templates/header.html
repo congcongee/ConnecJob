@@ -1,9 +1,63 @@
-<nav class="navbar navbar-expand bg-body-tertiary border-bottom">
+<nav class="navbar navbar-expand-lg site-head sticky-top" data-bs-theme="dark"> <!-- dark : 메뉴 아이콘을 흰색으로 -->
   <div class="container">
-    <a class="navbar-brand fw-bold" href="{% url 'matching:index' %}">ConnecJob</a>
-    <ul class="navbar-nav">
-      <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'index' %}active{% endif %}" href="{% url 'matching:index' %}">경험 입력</a></li>
-      <li class="nav-item"><a class="nav-link {% if request.resolver_match.url_name == 'history' %}active{% endif %}" href="{% url 'matching:history' %}">지난 결과</a></li>
+    <!-- 왼쪽 위 메뉴 버튼 : 누르면 왼쪽에서 메뉴 창이 열림 (Bootstrap offcanvas) -->
+    <button class="btn menu-btn me-2" type="button" data-bs-toggle="offcanvas" data-bs-target="#site-menu" aria-label="전체 메뉴 열기">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+    <a class="navbar-brand logo" href="{% url 'matching:home' %}">ConnecJob</a>
+
+    <ul class="navbar-nav me-auto d-none d-lg-flex">
+      <li class="nav-item"><a class="nav-link {% if '/jobs/' in request.path %}active{% endif %}" href="{% url 'matching:jobs' %}">공고 둘러보기</a></li>
+      <li class="nav-item"><a class="nav-link {% if request.path == '/guide/' %}active{% endif %}" href="{% url 'matching:guide' %}">직무 알아보기</a></li>
+      <li class="nav-item"><a class="nav-link {% if request.path == '/match/' %}active{% endif %}" href="{% url 'matching:index' %}">맞춤 추천</a></li>
     </ul>
+
+    <!-- 오른쪽 : 회원 / 비회원 -->
+    <div class="d-flex align-items-center gap-2 ms-auto">
+      {% if user.is_authenticated %}
+        <span class="d-none d-md-inline small who"><b>{{ user }}</b>님</span>
+        <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
+          {% csrf_token %}
+          <button type="submit" class="btn btn-outline-light btn-sm">로그아웃</button>
+        </form>
+      {% else %}
+        <a class="btn btn-outline-light btn-sm" href="{% url 'accounts:login' %}?next={{ request.path }}">로그인</a>
+        <a class="btn btn-white btn-sm d-none d-sm-inline-block" href="{% url 'accounts:signup' %}?next={{ request.path }}">회원가입</a>
+      {% endif %}
+    </div>
   </div>
 </nav>
+
+<!-- 왼쪽 메뉴 창 -->
+<div class="offcanvas offcanvas-start" tabindex="-1" id="site-menu" aria-labelledby="site-menu-title">
+  <div class="offcanvas-header border-bottom">
+    <h5 class="offcanvas-title logo" id="site-menu-title">ConnecJob</h5>
+    <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="메뉴 닫기"></button>
+  </div>
+  <div class="offcanvas-body">
+    <div class="p-3 mb-4 bg-gray rounded-3 small">
+      {% if user.is_authenticated %}
+        <b>{{ user }}</b>님, 결과가 계정에 저장되고 있어요.
+      {% else %}
+        지금은 <b>비회원</b>이에요. 결과는 이 브라우저에서만 볼 수 있어요.
+        <div class="d-flex gap-2 mt-3">
+          <a class="btn btn-primary btn-sm w-50" href="{% url 'accounts:login' %}?next={{ request.path }}">로그인</a>
+          <a class="btn btn-outline-primary btn-sm w-50" href="{% url 'accounts:signup' %}?next={{ request.path }}">회원가입</a>
+        </div>
+      {% endif %}
+    </div>
+    <div class="list-group list-group-flush menu-list">
+      <a class="list-group-item list-group-item-action" href="{% url 'matching:home' %}">홈</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'matching:jobs' %}">공고 둘러보기</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'matching:guide' %}">직무 알아보기 · 나에게 맞는 직무</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'matching:index' %}">경험 입력하고 맞춤 추천받기</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'matching:history' %}">지난 결과 · 자소서</a>
+    </div>
+    {% if user.is_authenticated %}
+    <form method="post" action="{% url 'accounts:logout' %}" class="mt-4">
+      {% csrf_token %}
+      <button type="submit" class="btn btn-outline-secondary btn-sm w-100">로그아웃</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
