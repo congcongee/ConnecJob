@@ -72,11 +72,6 @@ section.block{padding-top:96px;padding-bottom:96px}
 .sec-head p{margin:10px 0 0;color:var(--muted);max-width:34em}
 
 /* 다섯 단계 */
-.steps{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:24px;list-style:none;margin:0;padding:0}
-.step{border-top:var(--line);padding-top:18px;display:flex;flex-direction:column;gap:8px}
-.step-no{font:400 30px/1 'Archivo Black',sans-serif;color:var(--brand)}
-.step h3{font-size:21px;line-height:1.25}
-.step p{margin:0;font-size:15px;line-height:1.6;color:var(--muted)}
 
 /* 공고 카드: 사진 + 정보 */
 .filters{display:flex;flex-wrap:wrap;gap:8px}
@@ -130,7 +125,6 @@ footer ul{display:flex;gap:24px;flex-wrap:wrap;list-style:none;margin:0;padding:
 
 @media (max-width:960px){
   .flow{grid-template-columns:repeat(2,minmax(0,1fr));margin:-48px 16px 0}
-  .steps{grid-template-columns:1fr 1fr}
 }
 @media (max-width:760px){
   .wrap{padding:0 16px}
@@ -141,7 +135,6 @@ footer ul{display:flex;gap:24px;flex-wrap:wrap;list-style:none;margin:0;padding:
   .hero h1 .tag{box-shadow:5px 5px 0 var(--ink)}
   .hero-photo{aspect-ratio:4/3}
   .flow{grid-template-columns:1fr;margin:16px 0 0}
-  .steps{grid-template-columns:1fr}
   section.block{padding-top:64px;padding-bottom:64px}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important}}
@@ -159,7 +152,6 @@ footer ul{display:flex;gap:24px;flex-wrap:wrap;list-style:none;margin:0;padding:
     </div>
     <nav aria-label="주요 메뉴">
       <ul>
-        <li><a href="#steps">이용 방법</a></li>
         <li><a href="#jobs">추천 공고</a></li>
       </ul>
     </nav>
@@ -212,23 +204,6 @@ footer ul{display:flex;gap:24px;flex-wrap:wrap;list-style:none;margin:0;padding:
     </div>
   </section>
 
-  <section class="block" id="steps" aria-labelledby="steps-h">
-    <div class="wrap">
-      <div class="sec-head">
-        <div>
-          <h2 id="steps-h">경험 하나로 다섯 단계</h2>
-          <p>모든 추천에는 어느 경험에서 나왔는지가 함께 표시돼요.</p>
-        </div>
-      </div>
-      <ol class="steps">
-        <li class="step"><span class="step-no">1</span><h3>STAR 카드</h3><p>경험을 상황, 과제, 행동, 결과로 나누고 빈 칸은 질문으로 채워요.</p></li>
-        <li class="step"><span class="step-no">2</span><h3>직무 추천</h3><p>경험과 맞닿은 NCS 능력단위로 어울리는 직무를 골라요.</p></li>
-        <li class="step"><span class="step-no">3</span><h3>공고와 회사</h3><p>그 직무를 뽑는 공고를 기업 규모별로 보여 주고 회사 정보도 함께 보여요.</p></li>
-        <li class="step"><span class="step-no">4</span><h3>보완점</h3><p>공고가 원하는데 아직 없는 역량과 관련 자격증, 학습 키워드를 알려 줘요.</p></li>
-        <li class="step"><span class="step-no">5</span><h3>자소서</h3><p>문항마다 쓸 경험을 짝지어 주고, 쓴 글을 공고 기준으로 첨삭해요.</p></li>
-      </ol>
-    </div>
-  </section>
 
   <section class="block" id="jobs" aria-labelledby="jobs-h" style="padding-top:0">
     <div class="wrap">
@@ -270,7 +245,6 @@ footer ul{display:flex;gap:24px;flex-wrap:wrap;list-style:none;margin:0;padding:
   <button class="close" type="button" aria-label="메뉴 닫기" data-close>✕</button>
   <span class="logo">ConnecJob</span>
   <nav class="menu" aria-label="전체 메뉴">
-    <a href="#steps" data-close>이용 방법</a>
     <a href="#jobs" data-close>추천 공고</a>
     <a href="#start" data-close>경험 적기</a>
   </nav>
