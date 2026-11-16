@@ -7,9 +7,11 @@
 - **Tools:** Git, GitHub
 
 ## 📂 Project Structure
-- `code/` : 주요 소스 코드
-- `data/` : 전처리된 데이터 파일
-- `ppt/` : 발표 자료 및 문서
+- `code/` : 수집·전처리·추천·자소서 소스 코드 (`eda_postings.ipynb` 탐색 분석)
+- `data/` : 원본(`raw/`)·전처리(`processed/`) 데이터, 사전·평가 표, EDA 그림(`eda/`)
+- `web/` : Django 웹 서비스 (`run_web.bat` 으로 실행)
+- `html/` : 랜딩 페이지 최종 시안
+- `docs/` : 발표 자료·원고, 화면 구조 설명, 작업일지
 
 ## 🌐 웹 서비스 실행 (Django)
 conda `llm` 환경 (langchain·chroma·django 5.2), 키는 `data/.env.example` 을 `data/.env` 로 복사해 `OPENAI_API_KEY` 입력
