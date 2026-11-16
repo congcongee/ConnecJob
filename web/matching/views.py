@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 import openai
 from django.contrib import messages
+from django.core.paginator import Paginator
 from django.db.models import F, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.html import escape
@@ -177,19 +178,14 @@ def jobs(request):
   if newbie:
     items = items.exclude(career="경력")
   items = items.order_by(F("deadline").asc(nulls_last=True), "id") # 상시는 뒤로
-  count = items.count()
 
-  # 페이지 나누기 : 쿼리셋 자르기 [시작:끝] (DB 에서 20개만 가져옴)
-  page = request.GET.get("page", "1")
-  page = int(page) if page.isdigit() else 1
-  last = (count + PER_PAGE - 1) // PER_PAGE or 1
-  page = min(max(page, 1), last)
-  rows = items[(page - 1) * PER_PAGE : page * PER_PAGE]
+  # 페이징 기능 : get_page 는 'abc'·범위 밖 번호면 첫·마지막 페이지로 (DB 에서 20개만 가져옴)
+  paginator = Paginator(items, per_page=PER_PAGE)
+  page_obj = paginator.get_page(request.GET.get("page", "1"))
 
   context = {
-    "rows": [add_display(p.as_dict()) for p in rows],
-    "count": count,
-    "page": page, "last": last,
+    "rows": [add_display(p.as_dict()) for p in page_obj],
+    "page_obj": page_obj,
     "q": q, "group": group, "size": size, "newbie": newbie,
     "groups": sorted(group_counts(all_items)),
     "sizes": SIZES,

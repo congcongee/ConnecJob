@@ -42,7 +42,7 @@
     {% if group_desc %}<div class="alert bg-soft border-0"><b>{{ group }}</b> : {{ group_desc }} <a href="{% url 'matching:guide' %}">자세히</a></div>{% endif %}
     <div class="card">
       <div class="card-header d-flex flex-wrap justify-content-between gap-2">
-        <span>공고 <span class="text-brand">{{ count }}</span>건 <span class="fw-normal small text-secondary ms-1">마감 빠른 순</span></span>
+        <span>공고 <span class="text-brand">{{ page_obj.paginator.count }}</span>건 <span class="fw-normal small text-secondary ms-1">마감 빠른 순</span></span>
         <span class="fw-normal small">
           {% if q %}<span class="badge rounded-pill bg-gray text-dark border">"{{ q }}"</span>{% endif %}
           {% if group %}<span class="badge rounded-pill bg-gray text-dark border">{{ group }}</span>{% endif %}
@@ -73,11 +73,11 @@
     </div>
 
     <!-- 페이지 이동 -->
-    {% if last > 1 %}
+    {% if page_obj.paginator.num_pages > 1 %}
     <div class="d-flex justify-content-center align-items-center gap-3 my-4">
-      {% if page > 1 %}<a class="btn btn-outline-secondary btn-sm" href="?q={{ q|urlencode }}&group={{ group|urlencode }}&size={{ size|urlencode }}{% if newbie %}&newbie=1{% endif %}&page={{ page|add:'-1' }}">이전</a>{% endif %}
-      <span>{{ page }} / {{ last }}</span>
-      {% if page < last %}<a class="btn btn-outline-secondary btn-sm" href="?q={{ q|urlencode }}&group={{ group|urlencode }}&size={{ size|urlencode }}{% if newbie %}&newbie=1{% endif %}&page={{ page|add:'1' }}">다음</a>{% endif %}
+      {% if page_obj.has_previous %}<a class="btn btn-outline-secondary btn-sm" href="?q={{ q|urlencode }}&group={{ group|urlencode }}&size={{ size|urlencode }}{% if newbie %}&newbie=1{% endif %}&page={{ page_obj.previous_page_number }}">이전</a>{% endif %}
+      <span>{{ page_obj.number }} / {{ page_obj.paginator.num_pages }}</span>
+      {% if page_obj.has_next %}<a class="btn btn-outline-secondary btn-sm" href="?q={{ q|urlencode }}&group={{ group|urlencode }}&size={{ size|urlencode }}{% if newbie %}&newbie=1{% endif %}&page={{ page_obj.next_page_number }}">다음</a>{% endif %}
     </div>
     {% endif %}
   </div>
