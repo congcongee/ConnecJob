@@ -14,6 +14,7 @@
 </head>
 <body>
   {% include "header.html" %}
+  {% block hero %}{% endblock %}{# 화면 폭 전체를 쓰는 첫 화면 (홈만) #}
   <div class="container py-4">
     {% block stepper %}{% endblock %}
     <!-- Django 메시지를 Bootstrap Alert로 표시 -->
@@ -40,8 +41,20 @@
     {% block content %}{% endblock %}
   </div>
   {% include "footer.html" with year=2026 collected="2026.11.04~11.06" %}{# 공고 수집일 : 다시 수집하면 바꿈 #}
+  <!-- 맨 위로 : 한 화면 넘게 내려가면 오른쪽 아래에 나타남 -->
+  <button type="button" class="to-top" id="to-top" aria-label="맨 위로 가기">
+    <svg width="22" height="22" viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="M4.5 12.5 10 7l5.5 5.5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </button>
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script>
+    let toTop = document.getElementById("to-top");
+    function showToTop() { toTop.classList.toggle("show", window.scrollY > window.innerHeight * 0.8); }
+    window.addEventListener("scroll", showToTop, { passive: true });
+    showToTop();
+    toTop.addEventListener("click", function () {
+      let reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches; // 움직임 줄이기 설정이면 바로 이동
+      window.scrollTo({ top: 0, behavior: reduce ? "auto" : "smooth" });
+    });
     // AI 호출은 수십 초 걸림 → 처음 누르면 안내 문구를 보여 주고, 다시 누르면 제출을 막음
     let forms = document.querySelectorAll(".loading-form");
     for (let i = 0; i < forms.length; i++) {

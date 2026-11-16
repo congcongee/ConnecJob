@@ -7,13 +7,15 @@
     <a class="navbar-brand logo" href="{% url 'matching:home' %}">ConnecJob</a>
 
     <ul class="navbar-nav me-auto d-none d-lg-flex">
+      <li class="nav-item"><a class="nav-link {% if request.path == '/guide/' %}active{% endif %}" href="{% url 'matching:guide' %}">직무 탐구</a></li>
+      <li class="nav-item"><a class="nav-link {% if request.path == '/match/' %}active{% endif %}" href="{% url 'matching:index' %}">경험으로 지원 준비</a></li>
       <li class="nav-item"><a class="nav-link {% if '/jobs/' in request.path %}active{% endif %}" href="{% url 'matching:jobs' %}">공고 둘러보기</a></li>
-      <li class="nav-item"><a class="nav-link {% if request.path == '/guide/' %}active{% endif %}" href="{% url 'matching:guide' %}">직무 알아보기</a></li>
-      <li class="nav-item"><a class="nav-link {% if request.path == '/match/' %}active{% endif %}" href="{% url 'matching:index' %}">맞춤 추천</a></li>
     </ul>
 
     <!-- 오른쪽 : 회원 / 비회원 -->
     <div class="d-flex align-items-center gap-2 ms-auto">
+      <!-- 지난 결과 : 세 메뉴와 달리 '내 기록'이라 로그인 옆 개인 영역에 둠 (비회원도 이 브라우저 결과를 봄) -->
+      <a class="nav-link head-mine d-none d-md-inline {% if request.path == '/history/' %}active{% endif %}" href="{% url 'matching:history' %}">지난 결과</a>
       {% if user.is_authenticated %}
         <span class="d-none d-md-inline small who"><b>{{ user }}</b>님</span>
         <form method="post" action="{% url 'accounts:logout' %}" class="m-0">
@@ -49,8 +51,8 @@
     <div class="list-group list-group-flush menu-list">
       <a class="list-group-item list-group-item-action" href="{% url 'matching:home' %}">홈</a>
       <a class="list-group-item list-group-item-action" href="{% url 'matching:jobs' %}">공고 둘러보기</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'matching:guide' %}">직무 알아보기 · 나에게 맞는 직무</a>
-      <a class="list-group-item list-group-item-action" href="{% url 'matching:index' %}">경험 입력하고 맞춤 추천받기</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'matching:guide' %}">직무 탐구 · 나에게 맞는 직무</a>
+      <a class="list-group-item list-group-item-action" href="{% url 'matching:index' %}">경험으로 지원 준비 · 공고 추천</a>
       <a class="list-group-item list-group-item-action" href="{% url 'matching:history' %}">지난 결과 · 자소서</a>
     </div>
     {% if user.is_authenticated %}

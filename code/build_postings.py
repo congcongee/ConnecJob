@@ -113,7 +113,7 @@ if __name__ == "__main__":
     df = df.merge(size, left_on=["source", "기업명"], right_on=["출처", "기업명"], how="left")
     df["기업규모"] = df["기업규모"].fillna(df["기업규모태그"])
     df = df.drop(columns=["출처", "기업규모태그"])
-    df = pd.concat([df.drop(columns="page_content"), tag_columns(df["page_content"]), df["page_content"]], axis=1)
+    df = pd.concat([df.drop(columns="page_content"), tag_columns(df["page_content"], df["title"]), df["page_content"]], axis=1)
 
     str_cols = df.columns.drop("마감일")
     df[str_cols] = df[str_cols].fillna("정보없음")

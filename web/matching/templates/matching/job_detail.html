@@ -14,7 +14,7 @@
       <tbody>
         <tr><th class="text-secondary fw-normal" style="width: 120px">경력</th><td>{{ p.career }}</td></tr>
         <tr><th class="text-secondary fw-normal">근무지</th><td>{% if p.place %}{{ p.place }}{% else %}공고 참고{% endif %}</td></tr>
-        <tr><th class="text-secondary fw-normal">직무</th><td>{{ p.group_list|join:", " }}</td></tr>
+        {% if p.group_list %}<tr><th class="text-secondary fw-normal">직무</th><td>{{ p.group_list|join:", " }}</td></tr>{% endif %}
         <tr><th class="text-secondary fw-normal">출처</th><td>{{ p.source }}</td></tr>
         {% if p.tag_list %}<tr><th class="text-secondary fw-normal">요구 기술</th><td>{% for t in p.tag_list %}<span class="tag">{{ t }}</span>{% endfor %}</td></tr>{% endif %}
       </tbody>
@@ -27,7 +27,7 @@
 
     <h2 class="h5 mt-4">공고 내용</h2>
     <div class="card"><div class="card-body posting-body">{{ p.본문 }}</div></div>
-    <p class="small text-secondary mt-2">회사소개·근무조건 같은 부분은 빼고 업무 중심으로 정리한 내용이에요. 정확한 내용은 원문에서 확인하세요.</p>
+    <p class="small text-secondary mt-2">여러 채용 사이트의 공고를 같은 형식으로 모아 정리한 내용이에요. 정확한 내용은 원문에서 확인하세요.</p>
   </div>
 
   <div class="col-lg-4">

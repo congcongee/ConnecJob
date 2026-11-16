@@ -2,7 +2,7 @@
 {% block title %}공고 둘러보기{% endblock %}
 {% block content %}
 <h1 class="mb-1">공고 둘러보기</h1>
-<p class="text-secondary">모은 IT·데이터·마케팅 공고를 직접 찾아보세요. 내 경험에 맞는 공고만 보고 싶다면 <a href="{% url 'matching:index' %}">맞춤 추천</a>을 받아 보세요.</p>
+<p class="text-secondary">모은 IT·데이터·마케팅 공고를 직접 찾아보세요. 내 경험에 맞는 공고만 보고 싶다면 <a href="{% url 'matching:index' %}">경험으로 지원 준비</a>에서 추천받아 보세요.</p>
 
 <form method="get" class="d-flex gap-2 mb-4">
   <input name="q" value="{{ q }}" class="form-control form-control-lg" placeholder="직무, 회사, 기술로 검색 (예: Django, 데이터 분석)" aria-label="공고 검색">

@@ -18,6 +18,7 @@ Windows 에서는 `run_web.bat` 을 더블클릭하면 서버가 켜지고 브�
 ```bash
 cd web
 python manage.py migrate
+python manage.py load_postings   # data/processed/postings.csv 공고 6만 건 → Posting 테이블 (공고 표를 다시 만들면 다시 실행)
 python manage.py runserver   # http://localhost:8000
 python manage.py test matching   # 화면 흐름 테스트 (AI 호출은 가짜)
 ```

@@ -33,10 +33,12 @@ h1, h2, h3, h4, h5, .h2, .h3, .h4, .h5 { font-weight: 700; letter-spacing: -0.02
 /* 헤더 : 파란 바탕 + 흰 글자 */
 .site-head { background-color: #1F06AC; }
 .site-head .logo { color: #fff !important; }
-.site-head .menu-btn { border: 0; }
+/* 삼선 선이 본문 왼쪽 끝과 맞도록 : 버튼 안쪽 여백 12px + 아이콘 그림 안 여백 3px 만큼 왼쪽으로 */
+.site-head .menu-btn { border: 0; margin-left: -15px; }
 .site-head .menu-btn:hover { background-color: rgba(255, 255, 255, 0.12); }
 .logo { font-size: 22px; font-weight: 800; color: #1F06AC !important; letter-spacing: -0.04em; }
-.site-head .nav-link { font-weight: 600; color: #D9D4FA; }
+.site-head .nav-link { font-size: 16px; font-weight: 700; color: #ECEAFE; padding-left: 14px !important; padding-right: 14px !important; } /* 메뉴가 눈에 띄게 : 더 밝고 굵게 */
+.site-head .head-mine { font-size: 15px; font-weight: 600; margin-right: 8px; } /* 개인 영역 링크 : 세 메뉴보다 한 단계 작게 */
 .site-head .nav-link:hover { color: #fff; }
 .site-head .nav-link.active { color: #fff; border-bottom: 3px solid #fff; }
 .site-head .who { color: #D9D4FA; }
@@ -109,8 +111,83 @@ a.ex-card:hover .title { color: #1F06AC; text-decoration: underline; }
 /* AI 기다리는 안내 문구 (제출하면 JS 로 보임) */
 .loading-msg { display: none; }
 
-/* 홈 슬로건 옆 사진 */
-.hero-photo { width: 100%; height: 280px; object-fit: cover; border-radius: 16px; }
+/* 홈 첫 화면 : 사진 + 왼쪽이 짙은 파란 그라데이션 (글자 대비 확보) */
+/* 사람 사진이라 색은 그대로 (파랗게 물들이면 피부가 어색함). 왼쪽 파란 그라데이션으로 브랜드 색과 이음 */
+/* 첫 화면 : 화면 폭을 꽉 채운 사진. 높이는 창보다 조금 작게 해서 아래 '하는 일' 제목이 첫 화면에 보이게 (더 있다는 신호) */
+.hero { position: relative; display: flex; flex-direction: column; justify-content: center;
+  min-height: clamp(540px, calc(100vh - 214px), 760px); min-height: clamp(540px, calc(100svh - 214px), 760px);
+  background-color: #1F06AC; background-size: cover; background-position: center 35%; color: #fff; }
+.hero::before { content: ""; position: absolute; inset: 0;
+  background: linear-gradient(90deg, rgba(12, 4, 70, 0.95) 0%, rgba(20, 6, 120, 0.85) 40%, rgba(31, 6, 172, 0.2) 100%); }
+.hero-inner { position: relative; width: 100%; padding-top: 64px; padding-bottom: 88px; }
+/* 슬로건이 사진에 묻히지 않게 : 더 크게 + 강조색은 밝은 라임(짙은 파랑 위 대비 높음) + 옅은 그림자 */
+.hero .slogan { font-size: 76px; color: #fff; text-shadow: 0 2px 16px rgba(0, 0, 0, 0.35); }
+.hero .slogan span { color: #E3EF4F; }
+.hero-lead { max-width: 600px; font-size: 18px; color: rgba(255, 255, 255, 0.9); }
+
+/* 첫 화면 아래 가운데 '더 알아보기' : 버튼 상자 없이 작은 글씨 + 얇은 꺾쇠만 (사진을 가리지 않고 가볍게)
+   꺾쇠가 살짝 위아래로 움직여 '아래에 더 있다'를 알림. 누르면 두 기둥 카드로 내려감 */
+.hero-down { position: absolute; left: 50%; bottom: 24px; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 6px;
+  transform: translateX(-50%); padding: 8px 12px; font-size: 13px; font-weight: 600; letter-spacing: 0.04em;
+  color: rgba(255, 255, 255, 0.9); text-decoration: none; text-shadow: 0 1px 8px rgba(0, 0, 0, 0.5); filter: drop-shadow(0 1px 4px rgba(0, 0, 0, 0.35)); transition: color .15s; }
+.hero-down svg { animation: hero-bob 2s ease-in-out infinite; }
+.hero-down:hover { color: #fff; }
+.hero-down:focus-visible { outline: 2px solid #fff; outline-offset: 2px; border-radius: 8px; }
+@keyframes hero-bob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(6px); } }
+
+/* 두 기둥 카드 (첫 화면 바로 아래) : 칸 전체가 누르는 카드
+   subgrid : 두 칸의 제목·설명·항목·버튼 줄을 같은 높이에 맞춤 (설명 길이가 달라도 버튼 줄이 어긋나지 않게) */
+.pillar-list { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: repeat(4, auto); gap: 0 24px; }
+.pillars { padding: 24px 0 64px; scroll-margin-top: 60px; } /* v 로 내려왔을 때 위 메뉴 띠에 가리지 않게 */
+/* 제목 : V 꼭짓점 바로 아래 가운데 → 화살표가 가리키는 곳과 줄을 맞춤 */
+.pillars-head { margin-bottom: 24px; text-align: center; }
+.pillars-eyebrow { margin-bottom: 4px; font-size: 14px; font-weight: 700; letter-spacing: 0.08em; color: #1F06AC; }
+.pillars-head h2 { margin: 0; font-size: 30px; font-weight: 800; }
+/* 뿅 : 카드 판이 아래에서 살짝 커지며 떠오름 (끝에서 살짝 튀어나왔다 자리 잡음) */
+.pillar-list.pop-ready { opacity: 0; transform: translateY(32px) scale(0.96); }
+.pillar-list.popped { opacity: 1; transform: none; transition: opacity .4s ease-out, transform .5s cubic-bezier(.2, .9, .3, 1.25); }
+.pillar { grid-row: span 4; display: grid; grid-template-rows: subgrid; row-gap: 0; padding: 28px;
+  color: #1B1D22; background-color: #fff; border: 1px solid #E3E5EA; border-radius: 16px; box-shadow: 0 8px 24px rgba(22, 4, 126, 0.06);
+  transition: border-color .15s, background-color .15s; }
+.pillar:hover { color: #1B1D22; border-color: #1F06AC; background-color: #FAFAFF; }
+.pillar:focus-visible { outline: 3px solid #1F06AC; outline-offset: 2px; }
+.pillar-top { display: flex; align-items: center; gap: 12px; }
+.pillar-top h2 { margin: 0; font-size: 24px; }
+.pillar p { margin: 16px 0 20px; color: #6B7180; }
+/* 칸 안 항목 : 두 칸 같은 칩 모양. ② 는 실제 순서라 칩 사이에 화살표 */
+.pillar-items { display: flex; flex-wrap: wrap; align-content: start; gap: 8px; margin: 0 0 24px; }
+.pillar-items li { position: relative; padding: 6px 12px; font-size: 14px; font-weight: 600; color: #1F06AC; background-color: #EEF0FB; border-radius: 8px; }
+.pillar-flow { column-gap: 0; }
+.pillar-flow li:not(:last-child) { margin-right: 26px; }
+/* 화살표를 앞 칩 끝에 붙임 : 줄이 바뀌어도 화살표가 줄 맨 앞에 오지 않게 */
+.pillar-flow li:not(:last-child)::after { content: "→"; position: absolute; right: -19px; color: #9AA0AC; }
+/* 버튼 줄 : 칸 폭 전체, 두 칸 같은 크기 */
+.pillar-cta { display: flex; justify-content: space-between; align-items: center; align-self: end; padding: 14px 20px;
+  font-size: 17px; font-weight: 700; color: #1F06AC; background-color: #EEF0FB; border-radius: 10px; transition: background-color .15s; }
+.pillar-cta svg { transition: transform .15s; }
+.pillar:hover .pillar-cta { background-color: #DFE3FA; }
+.pillar:hover .pillar-cta svg { transform: translateX(4px); }
+.pillar-main .pillar-cta { color: #fff; background-color: #1F06AC; }
+.pillar-main:hover .pillar-cta { background-color: #16047E; }
+.pillar-main .part-no { background-color: #1F06AC; color: #fff; }
+/* 맨 위로 버튼 : 평소엔 숨기고 스크롤하면 나타남 */
+.to-top { position: fixed; right: 24px; bottom: 24px; z-index: 1030; display: flex; align-items: center; justify-content: center;
+  width: 52px; height: 52px; padding: 0; color: #fff; background-color: #1F06AC; border: 0; border-radius: 50%;
+  box-shadow: 0 8px 24px rgba(22, 4, 126, 0.3); opacity: 0; visibility: hidden; transform: translateY(8px);
+  transition: opacity .2s, transform .2s, visibility .2s, background-color .15s; }
+.to-top.show { opacity: 1; visibility: visible; transform: none; }
+.to-top:hover { background-color: #16047E; }
+.to-top:focus-visible { outline: 3px solid #1F06AC; outline-offset: 3px; }
+@media (max-width: 767px) { .to-top { right: 16px; bottom: 16px; width: 48px; height: 48px; } }
+@media (prefers-reduced-motion: reduce) { .hero-down svg { animation: none; } .hero-down, .pillar, .pillar-cta, .pillar-cta svg, .to-top { transition: none; } }
+.part-no { display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; width: 44px; height: 44px;
+  border-radius: 50%; background-color: #EEF0FB; color: #1F06AC; font-size: 20px; font-weight: 800; }
+
+/* 홈 아래 구역 : 얇은 선과 여백으로만 나눔 (선·상자를 겹겹이 두지 않음) */
+.part { padding: 56px 0; border-top: 1px solid #E3E5EA; scroll-margin-top: 72px; }
+.part + .part { margin-top: 24px; }
+.part-head { display: flex; flex-wrap: wrap; align-items: center; gap: 16px; margin-bottom: 32px; }
+.part-head h2 { font-size: 32px; }
 
 /* 마무리 띠 */
 .cta { border-radius: 20px; }
@@ -132,10 +209,23 @@ a.ex-card:hover .title { color: #1F06AC; text-decoration: underline; }
 @media (min-width: 992px) and (max-width: 1199.98px) {
   .slogan { font-size: 48px; }
 }
+/* 첫 화면 슬로건 : 화면 폭별 크기 (한 줄 유지) */
+@media (min-width: 992px) and (max-width: 1199.98px) { .hero .slogan { font-size: 64px; } }
+@media (min-width: 768px) and (max-width: 991.98px) { .hero .slogan { font-size: 56px; } }
 
 /* 휴대폰 */
 @media (max-width: 767px) {
   .slogan { font-size: 38px; }
+  .hero .slogan { font-size: 42px; }
+  .hero::before { background: rgba(12, 4, 70, 0.82); } /* 좁은 화면은 글자가 사진 전체에 걸쳐서 고르게 어둡게 */
+  .hero { min-height: clamp(440px, calc(100svh - 188px), 600px); }
+  .hero-inner { padding-top: 40px; padding-bottom: 72px; }
+  .pillar-list { grid-template-columns: 1fr; grid-template-rows: none; gap: 12px; }
+  .pillar { grid-row: auto; grid-template-rows: none; padding: 20px; }
+  /* 좁은 화면 : 화살표가 글자를 가리지 않게 아래 점 양옆으로 */
+  .hero-down { bottom: 16px; }
+  .pillars-head h2 { font-size: 24px; }
+  .part-head h2 { font-size: 26px; }
   .cta { text-align: center; }
   .cta h2 { font-size: 22px; }
   .ex-photo img { height: 140px; }

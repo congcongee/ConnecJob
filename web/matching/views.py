@@ -4,6 +4,7 @@ from datetime import date, timedelta
 
 import openai
 from django.contrib import messages
+from django.db.models import F, Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.utils.html import escape
 
@@ -13,7 +14,7 @@ from roadmap import VAGUE_TAGS, roadmap, study_plan
 
 from .forms import ExperienceForm, LetterForm, OptionForm, SIZES
 from .jobinfo import EXAMPLES, JOB_INFO, QUESTIONS
-from .models import Letter, Search
+from .models import Letter, Posting, Search
 
 # 직무 알아보기 '많이 요구하는 기술'에서 뺄 태그 : 너무 넓은 말(웹, 인공지능 …) + 문서 도구
 SKIP_TAGS = set(VAGUE_TAGS) | {"정보없음", "Word", "PowerPoint", "MS Office", "한글"}
@@ -25,8 +26,8 @@ EXP_KEY = "exps"         # 추천받기 전에 담아 둔 경험 목록 (세션)
 HOME_EXP_KEY = "home_exp" # 홈에서 적은 경험 글 (맞춤 추천 '내용' 칸에 한 번 채움)
 
 # ---------------------------------------------------------------- 공고 데이터
+# 둘러보기는 Posting 테이블(통합 공고 전체), 맞춤 추천·자소서는 벡터DB(직무묶음이 있는 공고)
 _db = None
-_postings = None
 
 def postings_db():
   global _db # Chroma 연결은 한 번만 (요청마다 만들면 느림)
@@ -34,22 +35,20 @@ def postings_db():
     _db = get_db("postings")
   return _db
 
-def postings():
-  """벡터DB 에 넣은 공고 전체 (메타 + 본문). 서버가 켜진 동안 한 번만 읽음 (AI 호출 없음)"""
-  global _postings
-  if _postings is None:
-    g = postings_db().get(include=["metadatas", "documents"])
-    _postings = []
-    for m, d in zip(g["metadatas"], g["documents"]):
-      p = dict(m)
-      p["본문"] = d
-      _postings.append(p)
-  return _postings
+def open_postings():
+  """마감이 안 지난 AI·데이터·개발 직무 공고 (마감일이 없으면 상시라 포함)
+  수집한 공고 대부분은 요양보호사·생산직 같은 다른 분야라, 직무묶음이 붙은 공고만 화면에 씀 (원본은 그대로)"""
+  return Posting.objects.filter(Q(deadline__gte=date.today()) | Q(deadline=None)).filter(job_groups__gt="")
+
+def in_group(g):
+  """직무묶음 'A;B;C' 중에 g 가 있는 공고 (그냥 contains 면 이름 일부만 겹쳐도 걸려서 ';' 경계로)"""
+  return (Q(job_groups=g) | Q(job_groups__startswith=g + ";")
+          | Q(job_groups__endswith=";" + g) | Q(job_groups__contains=";" + g + ";"))
 
 # ---------------------------------------------------------------- 화면에 보여 줄 값 계산
 def split_tags(text):
   """'Django;REST API' → ['Django', 'REST API']"""
-  return [t for t in str(text or "").split(";") if t and t != "nan"]
+  return [t for t in str(text or "").split(";") if t and t not in ("nan", "정보없음")]
 
 def to_date(text):
   try:
@@ -96,10 +95,6 @@ def is_open(p, today):
   d = to_date(p.get("마감일"))
   return d is None or d.isoformat() >= today
 
-def open_postings():
-  today = date.today().isoformat()
-  return [p for p in postings() if is_open(p, today)]
-
 def deadline_key(p):
   d = to_date(p.get("마감일"))
   return d.isoformat() if d else "9999" # 상시·정보없음은 뒤로
@@ -113,15 +108,13 @@ def deadline_soon(items, today, n=6):
       break
   return sorted(picked, key=deadline_key)[:n]
 
-def group_counts(items):
-  """직무별 공고 수 {'웹·백엔드 개발': 122, ...}"""
+def group_counts(qs):
+  """직무별 공고 수 {'웹·백엔드 개발': 122, ...} (공고가 있는 직무만)"""
+  # 직무묶음이 있는 공고는 수백 건뿐이라 한 번에 꺼내서 셈 (직무마다 쿼리하면 15번 전체 검색이라 느림)
   counts = dict()
-  for p in items:
-    for g in split_tags(p.get("직무묶음")):
-      if g in counts:
-        counts[g] += 1
-      else:
-        counts[g] = 1
+  for groups in qs.filter(job_groups__gt="").values_list("job_groups", flat=True):
+    for g in split_tags(groups):
+      counts[g] = counts.get(g, 0) + 1
   return counts
 
 # ---------------------------------------------------------------- 결과 주인 (회원 / 비회원)
@@ -148,7 +141,9 @@ def home(request):
   groups = []
   for g, n in sorted(counts.items(), key=lambda x: -x[1]):
     groups.append({"name": g, "count": n, "desc": JOB_INFO.get(g, {}).get("한줄", "")})
-  soon = deadline_soon(items, date.today())
+  today = date.today()
+  week = items.exclude(career="경력").filter(deadline__lte=today + timedelta(days=7)) # 후보만 꺼내서 고름
+  soon = deadline_soon([p.as_dict() for p in week], today)
   examples = []
   for e in EXAMPLES: # 요구 역량 막대 : 채운 칸 True, 빈 칸 False
     e = dict(e)
@@ -156,7 +151,7 @@ def home(request):
     examples.append(e)
   context = {
     "examples": examples,
-    "total": len(items),
+    "total": items.count(),
     "groups": groups,
     "soon": [add_display(p) for p in soon],
     "recent": owned(request)[:3],
@@ -174,25 +169,26 @@ def jobs(request):
   all_items = open_postings()
   items = all_items
   if q:
-    items = [p for p in items if q.lower() in f"{p['title']} {p['기업명']} {p['기술태그']}".lower()]
+    items = items.filter(Q(title__icontains=q) | Q(company__icontains=q) | Q(tech_tags__icontains=q))
   if group:
-    items = [p for p in items if group in split_tags(p.get("직무묶음"))]
+    items = items.filter(in_group(group))
   if size:
-    items = [p for p in items if p.get("기업규모") == size]
+    items = items.filter(size=size)
   if newbie:
-    items = [p for p in items if p.get("경력") != "경력"]
-  items = sorted(items, key=deadline_key)
+    items = items.exclude(career="경력")
+  items = items.order_by(F("deadline").asc(nulls_last=True), "id") # 상시는 뒤로
+  count = items.count()
 
-  # 페이지 나누기 : 리스트 자르기 [시작:끝]
+  # 페이지 나누기 : 쿼리셋 자르기 [시작:끝] (DB 에서 20개만 가져옴)
   page = request.GET.get("page", "1")
   page = int(page) if page.isdigit() else 1
-  last = (len(items) + PER_PAGE - 1) // PER_PAGE or 1
+  last = (count + PER_PAGE - 1) // PER_PAGE or 1
   page = min(max(page, 1), last)
   rows = items[(page - 1) * PER_PAGE : page * PER_PAGE]
 
   context = {
-    "rows": [add_display(p) for p in rows],
-    "count": len(items),
+    "rows": [add_display(p.as_dict()) for p in rows],
+    "count": count,
     "page": page, "last": last,
     "q": q, "group": group, "size": size, "newbie": newbie,
     "groups": sorted(group_counts(all_items)),
@@ -202,11 +198,11 @@ def jobs(request):
   return render(request, "matching/jobs.html", context)
 
 def job_detail(request, doc_id):
-  found = [p for p in postings() if p["doc_id"] == doc_id]
-  if not found: # 없는 공고 번호
+  found = Posting.objects.filter(doc_id=doc_id).first()
+  if found is None: # 없는 공고 번호
     messages.error(request, "찾는 공고가 없습니다.")
     return redirect("matching:jobs")
-  p = add_display(found[0])
+  p = add_display(found.as_dict())
   infos = [{"name": g, "desc": JOB_INFO[g]["한줄"]} for g in p["group_list"] if g in JOB_INFO]
   return render(request, "matching/job_detail.html",
                 {"p": p, "open": is_open(p, date.today().isoformat()), "infos": infos})
@@ -215,12 +211,13 @@ def guide(request):
   """직무 알아보기 : 직무별 설명 + 공고에서 많이 요구하는 기술 + 체크해서 맞는 직무 찾기"""
   items = open_postings()
   counts = group_counts(items)
+  grouped = list(items.filter(job_groups__gt="").values_list("job_groups", "tech_tags")) # 직무묶음 있는 공고만 한 번에
   cards = []
   for g, info in JOB_INFO.items():
     skills = dict() # 이 직무 공고의 기술태그 세기
-    for p in items:
-      if g in split_tags(p.get("직무묶음")):
-        for t in split_tags(p.get("기술태그")):
+    for groups, tags in grouped:
+      if g in split_tags(groups):
+        for t in split_tags(tags):
           if t not in SKIP_TAGS:
             skills[t] = skills.get(t, 0) + 1
     top = sorted(skills.items(), key=lambda x: -x[1])[:6]

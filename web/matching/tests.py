@@ -10,7 +10,7 @@ from django.test import TestCase
 from django.urls import reverse
 
 from . import views
-from .models import Letter, Search
+from .models import Letter, Posting, Search
 
 REC = {"doc_id": "d1", "title": "백엔드 개발자", "기업명": "테스트회사", "기업규모": "중소·기타", "시도": "서울",
        "경력": "신입", "마감일": "", "url": "정보없음", "기술태그": "Django", "직무묶음": "웹·백엔드 개발",
@@ -24,28 +24,39 @@ POST = {"doc_id": "p1", "title": "주니어 백엔드 개발자", "기업명": "
         "source": "인크루트", "본문": "Django API 개발"}
 OLD = dict(POST, doc_id="p2", title="지난 데이터 분석가", 마감일="2020-01-01", 직무묶음="데이터 분석·사이언스")
 
+def make(d):
+  """공고 dict (벡터DB 메타 모양) → Posting 한 줄"""
+  return Posting.objects.create(
+    doc_id=d["doc_id"], source=d["source"], title=d["title"], company=d["기업명"], category="",
+    size=d["기업규모"], region=d["시도"], career=d["경력"],
+    deadline=date.fromisoformat(d["마감일"]) if d["마감일"] else None, url=d["url"],
+    tech_tags=d["기술태그"], cert_tags="", job_groups=d["직무묶음"], content=d["본문"])
+
 def api_error():
   return openai.APIConnectionError(request=httpx.Request("POST", "https://api.openai.com"))
 
 
 class BrowseTest(TestCase):
-  """경험을 안 적어도 홈·공고 목록·상세·직무 알아보기를 볼 수 있음 (공고는 벡터DB 대신 가짜 목록)"""
+  """경험을 안 적어도 홈·공고 목록·상세·직무 알아보기를 볼 수 있음 (공고는 Posting 테이블)"""
   def setUp(self):
-    views._postings = [POST, OLD]
-
-  def tearDown(self):
-    views._postings = None
+    make(POST)
+    make(OLD)
 
   def test_home(self):
     soon = (date.today() + timedelta(days=1)).isoformat()
-    views._postings = [POST, OLD, dict(POST, doc_id="p3", title="곧 마감 QA 인턴", 마감일=soon, 시도="정보없음"),
-                       dict(POST, doc_id="p4", title="곧 마감 경력직", 마감일=soon, 경력="경력")]
+    make(dict(POST, doc_id="p3", title="곧 마감 QA 인턴", 마감일=soon, 시도="정보없음"))
+    make(dict(POST, doc_id="p4", title="곧 마감 경력직", 마감일=soon, 경력="경력"))
     res = self.client.get(reverse("matching:home"))
     self.assertContains(res, "곧 마감 QA 인턴")         # 마감 임박
     self.assertContains(res, "근무지 미기재")           # 근무지 빈칸
     self.assertNotContains(res, "곧 마감 경력직")       # 경력 필수 제외
     self.assertNotContains(res, "지난 데이터 분석가")    # 마감 지난 공고 제외
     self.assertContains(res, "웹 서비스의 서버와 데이터베이스를 만드는 일")  # 직무 한 줄 설명
+
+  def test_other_fields_hidden(self):
+    make(dict(POST, doc_id="x1", title="재가요양보호사 모집", 직무묶음=""))
+    for name in ("matching:home", "matching:jobs"):
+      self.assertNotContains(self.client.get(reverse(name)), "재가요양보호사") # 직무묶음 없는 다른 분야 공고는 안 보임
 
   def test_deadline_soon(self):
     today = date(2026, 11, 10)
@@ -58,6 +69,15 @@ class BrowseTest(TestCase):
     self.assertEqual(got, ["s1", "s2", "s5"])
     got = [x["doc_id"] for x in views.deadline_soon(items, today, n=2)]
     self.assertEqual(got, ["s1", "s2"]) # 3일 안에서 다 차면 넓히지 않음
+
+  def test_in_group(self):
+    make(dict(POST, doc_id="g1", 직무묶음="웹·백엔드 개발;데이터 분석·사이언스;QA·테스트"))
+    def n(g):
+      return Posting.objects.filter(views.in_group(g)).count()
+    self.assertEqual(n("데이터 분석·사이언스"), 2) # 가운데 (OLD 는 하나만)
+    self.assertEqual(n("QA·테스트"), 1)             # 끝
+    self.assertEqual(n("웹·백엔드 개발"), 2)        # 처음 + POST(하나만)
+    self.assertEqual(n("분석"), 0)                  # 이름 일부만 겹치면 안 걸림
 
   def test_jobs_filters(self):
     self.assertContains(self.client.get(reverse("matching:jobs"), {"q": "django"}), "주니어 백엔드 개발자")
@@ -81,10 +101,7 @@ class BrowseTest(TestCase):
 @mock.patch("matching.views.postings_db", return_value=None)
 class FlowTest(TestCase):
   def setUp(self):
-    views._postings = [POST]
-
-  def tearDown(self):
-    views._postings = None
+    make(POST)
 
   def test_home_text_prefills_form(self, _):
     # 홈 글은 POST → 세션 → GET (주소에 글이 안 붙음), 한 번 채우면 세션에서 지움

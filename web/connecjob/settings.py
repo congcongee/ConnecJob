@@ -33,6 +33,8 @@ SECRET_KEY = os.getenv("SECRET_KEY") or "django-insecure-e_t%p1l*aw@q(8+tfi1@d=9
 DEBUG = os.getenv("DEBUG", "True") == "True"
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
+# https 임시 주소(터널)로 열 때 로그인·폼(POST)이 막히지 않게. 예) https://*.trycloudflare.com
+CSRF_TRUSTED_ORIGINS = [o for o in os.getenv("CSRF_TRUSTED_ORIGINS", "").split(",") if o]
 
 
 # Application definition

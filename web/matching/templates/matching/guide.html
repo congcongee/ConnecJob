@@ -1,7 +1,7 @@
 {% extends "base.html" %}
-{% block title %}직무 알아보기{% endblock %}
+{% block title %}직무 탐구{% endblock %}
 {% block content %}
-<h1 class="mb-1">직무 알아보기</h1>
+<h1 class="mb-1">직무 탐구</h1>
 <p class="text-secondary mb-4">개발 직무 이름만으로는 무슨 일을 하는지 알기 어려워요. 직무마다 하는 일과 어울리는 사람, 실제 공고에서 많이 요구하는 기술을 정리했어요.</p>
 
 <!-- 1. 나에게 맞는 직무 찾기 -->
@@ -42,7 +42,7 @@
       </div>
       {% endfor %}
     </div>
-    <p class="small text-secondary mt-3 mb-0">고른 문장으로만 점수를 매긴 거라 참고만 하세요. 내가 한 경험으로 맞는 공고를 찾으려면 <a href="{% url 'matching:index' %}">맞춤 추천</a>을 받아 보세요.</p>
+    <p class="small text-secondary mt-3 mb-0">고른 문장으로만 점수를 매긴 거라 참고만 하세요. 내가 한 경험으로 맞는 공고를 찾으려면 <a href="{% url 'matching:index' %}">경험으로 지원 준비</a>에서 찾아 보세요.</p>
     {% else %}
     <p class="text-secondary mb-0">하나 이상 골라 주세요.</p>
     {% endif %}
