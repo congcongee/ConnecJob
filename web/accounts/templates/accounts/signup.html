@@ -3,7 +3,7 @@
 {% block content %}
 <div class="mx-auto my-3" style="max-width: 420px">
   <h1>회원가입</h1>
-  <p class="text-secondary">아이디와 비밀번호만 있으면 돼요. 비회원으로 만든 결과도 가입하면 계정으로 옮겨져요.</p>
+  <p class="text-secondary">아이디와 비밀번호만 있으면 돼요.<br>비회원으로 만든 결과도 가입하면 계정으로 옮겨져요.</p>
   <form method="post" class="card p-4 form-box" novalidate>
     {% csrf_token %}
     {% for field in form %}

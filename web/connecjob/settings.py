@@ -53,6 +53,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",  # DEBUG=False(배포)일 때 static 파일을 장고가 직접 서빙
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
@@ -132,6 +133,7 @@ LOGOUT_REDIRECT_URL = "matching:home"
 
 STATIC_URL = "static/"
 STATICFILES_DIRS = [BASE_DIR / "connecjob" / "static"]  # 프로젝트 공통 CSS (앱 폴더가 아니라 자동으로 안 찾음)
+STATIC_ROOT = BASE_DIR / "staticfiles"  # python manage.py collectstatic 이 모으는 곳 (배포용)
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field

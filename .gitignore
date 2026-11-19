@@ -23,3 +23,6 @@ data/eval_top5_review.csv
 # 민간 사이트(하이잡·인크루트·잡다) 공고에서 만든 파생 표 → code/match_posting_job.py, match_company_size.py 로 다시 만들기
 data/processed/posting_job.csv
 data/processed/company_size.csv
+# 배포 : 가상환경, collectstatic 결과
+.venv/
+web/staticfiles/
