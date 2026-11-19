@@ -4,6 +4,10 @@
 
 경험을 적으면 맞는 직무·채용공고를 근거와 함께 추천하고, 부족 역량 로드맵과 자소서 초안까지 만들어 주는 AI 취업 매칭 서비스
 
+### 🌐 웹 서비스 바로가기
+https://belts-starter-tenant-learn.trycloudflare.com
+(AWS EC2 + Cloudflare 터널로 배포, 서버 재시작 시 주소가 바뀔 수 있어 접속이 안 되면 아래 시연 영상 참고)
+
 ### 🎬 시연 영상
 [![ConnecJob 시연 영상](https://img.youtube.com/vi/rF4LaZISgIM/hqdefault.jpg)](https://www.youtube.com/watch?v=rF4LaZISgIM)
 
