@@ -7,8 +7,6 @@
 ### 🎬 시연 영상
 [![ConnecJob 시연 영상](https://img.youtube.com/vi/rF4LaZISgIM/hqdefault.jpg)](https://www.youtube.com/watch?v=rF4LaZISgIM)
 
-- 소개 페이지 : https://connecjob.pages.dev
-
 ## 🛠 Tech Stack
 - **Language:** Python
 - **Tools:** Git, GitHub
@@ -17,7 +15,7 @@
 - `code/` : 수집·전처리·추천·자소서 소스 코드 (`eda_postings.ipynb` 탐색 분석)
 - `data/` : 원본(`raw/`)·전처리(`processed/`) 데이터, 사전·평가 표, EDA 그림(`eda/`)
 - `web/` : Django 웹 서비스 (`run_web.bat` 으로 실행)
-- `html/` : 소개 페이지 (`index.html`, Cloudflare Pages 로 배포)
+- `html/` : 랜딩 페이지 최종 시안
 - `docs/` : 발표 자료·원고, 화면 구조 설명, 작업일지
 
 ## 🌐 웹 서비스 실행 (Django)
