@@ -1,0 +1,4 @@
+# GitHub 언어 통계에서 제외 : 랜딩 시안(글꼴 내장 456KB)·문서 HTML·EDA 노트북(그래프 출력) 때문에 HTML 프로젝트로 보이지 않게
+html/** linguist-documentation
+docs/** linguist-documentation
+*.ipynb linguist-documentation
