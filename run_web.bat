@@ -26,6 +26,8 @@ if not exist "db.sqlite3" (
 )
 
 start "" http://127.0.0.1:8000
+rem 로컬 개발용 : DEBUG 를 켜야 runserver 가 CSS 를 서빙함 (settings.py 기본값은 False)
+set DEBUG=True
 "%PY%" manage.py runserver
 goto :eof
 

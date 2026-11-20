@@ -30,7 +30,7 @@ load_dotenv(BASE_DIR.parent / "data" / ".env")
 SECRET_KEY = os.getenv("SECRET_KEY") # data/.env 에서 읽음 (코드에 적어 두면 저장소와 함께 공개됨)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv("DEBUG", "True") == "True"
+DEBUG = os.getenv("DEBUG", "False") == "True"  # 기본은 끔 : .env 를 빠뜨려도 배포 서버에서 오류 화면이 설정을 드러내지 않게
 
 ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "localhost,127.0.0.1").split(",")
 # https 임시 주소(터널)로 열 때 로그인·폼(POST)이 막히지 않게. 예) https://*.trycloudflare.com
